@@ -1,0 +1,14 @@
+diff --git a/package.json b/package.json
+index 8a1ae6a9196f62d47ab1952b2dcfa6ca92ba3d01..62be6e1fadfdbc9cbc8c72c996531bf15c63358c 100644
+--- a/package.json
++++ b/package.json
+@@ -57,7 +57,8 @@
+       "default": "./dist/preset/index.js"
+     },
+     "./tailwind.css": {
+-      "style": "./dist/tailwind.css"
++      "style": "./dist/tailwind.css",
++      "default": "./dist/tailwind.css"
+     }
+   },
+   "bin": "./dist/index.js",

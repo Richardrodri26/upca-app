@@ -1,8 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -10,4 +8,200 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+// ────────────────────────────────────
+// Enums
+// ────────────────────────────────────
+
+enum Role {
+  ADMIN
+  HR
+  EMPLOYEE
+}
+
+enum ManualStatus {
+  PENDING
+  PROCESSING
+  PROCESSED
+  ERROR
+}
+
+enum EvaluationStatus {
+  DRAFT
+  GENERATING
+  REVIEW
+  ACTIVE
+  CLOSED
+}
+
+enum QuestionStatus {
+  PENDING
+  APPROVED
+  EDITED
+  REJECTED
+}
+
+enum AssignmentStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+}
+
+// ────────────────────────────────────
+// Auth Models (Better Auth)
+// ────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  emailVerified Boolean   @default(false)
+  image         String?
+  role          Role      @default(EMPLOYEE)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  sessions           Session[]
+  accounts           Account[]
+  uploadedManuals    Manual[]               @relation("UploadedManuals")
+  createdEvaluations Evaluation[]           @relation("CreatedEvaluations")
+  assignments        EvaluationAssignment[] @relation("EmployeeAssignments")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Account {
+  id                    String   @id @default(cuid())
+  accountId             String
+  providerId            String
+  userId                String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+// ────────────────────────────────────
+// Domain Models
+// ────────────────────────────────────
+
+model Position {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  department  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  manual      Manual?
+  evaluations Evaluation[]
+}
+
+model Manual {
+  id           String       @id @default(cuid())
+  fileName     String
+  fileUrl      String?
+  status       ManualStatus @default(PENDING)
+  externalRef  String?
+  positionId   String       @unique
+  uploadedById String
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  position     Position     @relation(fields: [positionId], references: [id], onDelete: Cascade)
+  uploadedBy   User         @relation("UploadedManuals", fields: [uploadedById], references: [id])
+  evaluations  Evaluation[]
+}
+
+model Evaluation {
+  id             String           @id @default(cuid())
+  title          String
+  status         EvaluationStatus @default(DRAFT)
+  generationTime Float?
+  positionId     String
+  manualId       String
+  createdById    String
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  position       Position         @relation(fields: [positionId], references: [id], onDelete: Cascade)
+  manual         Manual           @relation(fields: [manualId], references: [id])
+  createdBy      User             @relation("CreatedEvaluations", fields: [createdById], references: [id])
+  questions      Question[]
+  assignments    EvaluationAssignment[]
+}
+
+model Question {
+  id              String         @id @default(cuid())
+  text            String
+  order           Int
+  status          QuestionStatus @default(PENDING)
+  originalText    String?
+  relevanceRating Int?
+  coherenceRating Int?
+  adequacyRating  Int?
+  evaluationId    String
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  evaluation      Evaluation     @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+  responses       Response[]
+}
+
+model EvaluationAssignment {
+  id           String           @id @default(cuid())
+  status       AssignmentStatus @default(PENDING)
+  score        Float?
+  completedAt  DateTime?
+  evaluationId String
+  employeeId   String
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  evaluation   Evaluation       @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+  employee     User             @relation("EmployeeAssignments", fields: [employeeId], references: [id])
+  responses    Response[]
+
+  @@unique([evaluationId, employeeId])
+}
+
+model Response {
+  id           String               @id @default(cuid())
+  value        Int
+  questionId   String
+  assignmentId String
+  createdAt    DateTime             @default(now())
+
+  question     Question             @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  assignment   EvaluationAssignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+
+  @@unique([questionId, assignmentId])
 }

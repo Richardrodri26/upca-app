@@ -4,6 +4,22 @@
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
 <!-- END:nextjs-agent-rules -->
 
+## Shell Environment — Critical Windows Rules                                                                
+                                                                                                               
+  The shell is **bash (Git Bash)**, NOT cmd.exe or PowerShell.                                                 
+                                               
+  - NEVER use `> nul` or `2> nul` to discard output — in bash this creates a **real file** named `nul` in the
+  CWD, which crashes Turbopack on Windows (OS error 1, reserved device name).
+  - ALWAYS use `> /dev/null` or `2>/dev/null` to discard output.
+  - NEVER use Windows CMD syntax in bash scripts. Bash uses Unix conventions.
+
+  If you ever need to kill a process, use:
+  ```bash
+  kill <PID>           # not taskkill
+  pkill -f <name>      # not taskkill /f /im
+  ```
+
+
 # UPCA App — Agent Context
 
 ## Project Overview
