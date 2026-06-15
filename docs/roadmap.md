@@ -8,19 +8,19 @@
 
 ## Fases
 
-### Phase 0: Project Harness `NOT_STARTED`
+### Phase 0: Project Harness `COMPLETED`
 
 **Plan**: [docs/plans/phase-0-harness.md](./plans/phase-0-harness.md)
 
-- [ ] 0.1 Docker Compose (PostgreSQL)
-- [ ] 0.2 Prisma v7 setup (schema, config, client)
-- [ ] 0.3 shadcn/ui initialization + base components
-- [ ] 0.4 TanStack Query & Form setup
-- [ ] 0.5 Folder structure (atomic design + features)
-- [ ] 0.6 Environment configuration (.env, types)
+- [x] 0.1 Docker Compose (PostgreSQL)
+- [x] 0.2 Prisma v7 setup (schema, config, client)
+- [x] 0.3 shadcn/ui initialization + base components
+- [x] 0.4 TanStack Query & Form setup
+- [x] 0.5 Folder structure (atomic design + features)
+- [x] 0.6 Environment configuration (.env, types)
 
 **Notas**:
-<!-- Agregar notas de esta fase aqui -->
+- 2026-06-15: Phase 0 completado. Prisma v7.8.0 genera OK. 17 componentes shadcn/ui instalados. TanStack Query 5 + Form 1 + Zod 4 configurados.
 
 ---
 
