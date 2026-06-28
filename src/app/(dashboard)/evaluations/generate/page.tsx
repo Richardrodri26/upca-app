@@ -8,6 +8,7 @@ import { useGenerateEvaluation } from "@/features/evaluations/queries";
 import { getPositionsWithProcessedManual } from "@/features/evaluations/actions";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -22,13 +23,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Slider } from "@/components/ui/slider";
+
+const DEFAULT_ENFOQUE = "Desempeño general de funciones y responsabilidades";
 
 export default function GenerateEvaluationPage() {
   const router = useRouter();
   const { data: session } = useSession();
   const [positionId, setPositionId] = useState("");
-  const [questionCount, setQuestionCount] = useState(15);
+  const [enfoque, setEnfoque] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const { data: positions = [] } = useQuery({
@@ -38,7 +40,6 @@ export default function GenerateEvaluationPage() {
 
   const mutation = useGenerateEvaluation();
 
-  // Role guard
   if (session?.user?.role !== "ADMIN" && session?.user?.role !== "HR") {
     return (
       <div className="text-muted-foreground py-16 text-center">
@@ -54,7 +55,7 @@ export default function GenerateEvaluationPage() {
     }
     setError(null);
 
-    const result = await mutation.mutateAsync({ positionId, questionCount });
+    const result = await mutation.mutateAsync({ positionId, enfoque });
 
     if (result.success && result.evaluationId) {
       router.push(`/evaluations/${result.evaluationId}/review`);
@@ -70,7 +71,7 @@ export default function GenerateEvaluationPage() {
           Generar Evaluación
         </h1>
         <p className="text-muted-foreground">
-          Seleccione un cargo con manual procesado para generar preguntas con IA
+          Seleccione un cargo y defina el enfoque para generar preguntas con IA
         </p>
       </div>
 
@@ -78,7 +79,7 @@ export default function GenerateEvaluationPage() {
         <CardHeader>
           <CardTitle>Configuración</CardTitle>
           <CardDescription>
-            Elegí el cargo y la cantidad de preguntas a generar
+            El agente generará preguntas en escala Likert basadas en el manual del cargo
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-6">
@@ -91,37 +92,28 @@ export default function GenerateEvaluationPage() {
               <SelectContent>
                 {positions.map((p) => (
                   <SelectItem key={p.id} value={p.id}>
-                    {p.name} ({p.department ?? "Sin depto"})
+                    {p.name}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
             {positions.length === 0 && (
               <p className="text-sm text-muted-foreground">
-                No hay cargos con manual procesado. Subí un manual primero.
+                No hay cargos registrados en el sistema RAG. Registrá un manual primero.
               </p>
             )}
           </div>
 
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-between">
-              <Label>Cantidad de preguntas</Label>
-              <span className="text-sm font-medium tabular-nums w-8 text-right">
-                {questionCount}
-              </span>
-            </div>
-            <Slider
-              value={[questionCount]}
-              onValueChange={(values) => {
-                const v = Array.isArray(values) ? values[0] : values;
-                if (v !== undefined && v !== null) setQuestionCount(v);
-              }}
-              min={10}
-              max={20}
-              step={1}
+          <div className="flex flex-col gap-1.5">
+            <Label>Enfoque de la evaluación</Label>
+            <Textarea
+              value={enfoque}
+              onChange={(e) => setEnfoque(e.target.value)}
+              placeholder={DEFAULT_ENFOQUE}
+              rows={3}
             />
             <p className="text-xs text-muted-foreground">
-              Entre 10 y 20 preguntas
+              Opcional. Define el pilar o área que el agente priorizará al generar las preguntas.
             </p>
           </div>
 

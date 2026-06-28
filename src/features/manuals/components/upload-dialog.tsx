@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -23,60 +23,52 @@ type PositionOption = {
   name: string;
 };
 
-type UploadDialogProps = {
+type RegisterManualDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   positions: PositionOption[];
-  onUpload: (formData: FormData) => Promise<{ success: boolean; error?: string }>;
+  onRegister: (positionId: string) => Promise<{ success: boolean; error?: string }>;
 };
 
 export function UploadDialog({
   open,
   onOpenChange,
   positions,
-  onUpload,
-}: UploadDialogProps) {
+  onRegister,
+}: RegisterManualDialogProps) {
   const [positionId, setPositionId] = useState("");
-  const [file, setFile] = useState<File | null>(null);
-  const [uploading, setUploading] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = async () => {
-    if (!positionId || !file) {
-      setError("Seleccione un cargo y un archivo");
+    if (!positionId) {
+      setError("Seleccione un cargo");
       return;
     }
 
-    setUploading(true);
+    setLoading(true);
     setError(null);
 
-    const formData = new FormData();
-    formData.append("positionId", positionId);
-    formData.append("file", file);
-
-    const result = await onUpload(formData);
+    const result = await onRegister(positionId);
 
     if (result.success) {
       setPositionId("");
-      setFile(null);
-      if (fileInputRef.current) fileInputRef.current.value = "";
       onOpenChange(false);
     } else {
-      setError(result.error ?? "Error al subir el manual");
+      setError(result.error ?? "Error al registrar el cargo");
     }
 
-    setUploading(false);
+    setLoading(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Subir Manual</DialogTitle>
-            <DialogDescription>
-              Seleccione el cargo y el archivo PDF del manual de funciones
-            </DialogDescription>
+          <DialogTitle>Registrar Manual en RAG</DialogTitle>
+          <DialogDescription>
+            Verifica que el cargo esté indexado en el sistema RAG del agente
+          </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
@@ -93,24 +85,9 @@ export function UploadDialog({
                 ))}
               </SelectContent>
             </Select>
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="manual-file">Archivo PDF</Label>
-            <input
-              ref={fileInputRef}
-              id="manual-file"
-              type="file"
-              accept=".pdf"
-              onChange={(e) => {
-                setFile(e.target.files?.[0] ?? null);
-                setError(null);
-              }}
-              className="text-sm file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
-            />
-            {file && (
+            {positions.length === 0 && (
               <p className="text-xs text-muted-foreground">
-                {file.name} ({(file.size / 1024).toFixed(1)} KB)
+                Todos los cargos ya tienen manual registrado.
               </p>
             )}
           </div>
@@ -119,8 +96,11 @@ export function UploadDialog({
             <p className="text-sm text-destructive">{error}</p>
           )}
 
-          <Button onClick={handleSubmit} disabled={uploading || !positionId || !file}>
-            {uploading ? "Subiendo..." : "Subir Manual"}
+          <Button
+            onClick={handleSubmit}
+            disabled={loading || !positionId}
+          >
+            {loading ? "Verificando en RAG..." : "Registrar en RAG"}
           </Button>
         </div>
       </DialogContent>

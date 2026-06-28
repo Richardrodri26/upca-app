@@ -62,11 +62,12 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  sessions           Session[]
-  accounts           Account[]
-  uploadedManuals    Manual[]               @relation("UploadedManuals")
-  createdEvaluations Evaluation[]           @relation("CreatedEvaluations")
-  assignments        EvaluationAssignment[] @relation("EmployeeAssignments")
+  sessions              Session[]
+  accounts              Account[]
+  uploadedManuals       Manual[]               @relation("UploadedManuals")
+  createdEvaluations    Evaluation[]           @relation("CreatedEvaluations")
+  assignments           EvaluationAssignment[] @relation("EmployeeAssignments")
+  evaluatorAssignments  EvaluationAssignment[] @relation("EvaluatorAssignments")
 }
 
 model Session {
@@ -161,10 +162,13 @@ model Evaluation {
 
 model Question {
   id              String         @id @default(cuid())
-  text            String
+  text            String         @db.Text
   order           Int
   status          QuestionStatus @default(PENDING)
-  originalText    String?
+  originalText    String?        @db.Text
+  pillar          String?
+  manualReference String?
+  scoringGuide    String?        @db.Text
   relevanceRating Int?
   coherenceRating Int?
   adequacyRating  Int?
@@ -183,11 +187,13 @@ model EvaluationAssignment {
   completedAt  DateTime?
   evaluationId String
   employeeId   String
+  evaluatorId  String
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
 
   evaluation   Evaluation       @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
   employee     User             @relation("EmployeeAssignments", fields: [employeeId], references: [id])
+  evaluator    User             @relation("EvaluatorAssignments", fields: [evaluatorId], references: [id])
   responses    Response[]
 
   @@unique([evaluationId, employeeId])

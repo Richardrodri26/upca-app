@@ -104,7 +104,8 @@ erDiagram
         Float score "avg on completion"
         DateTime completedAt
         String evaluationId FK
-        String employeeId FK
+        String employeeId FK "quien es evaluado"
+        String evaluatorId FK "quien realiza la evaluacion"
         DateTime createdAt
         DateTime updatedAt
     }
@@ -121,7 +122,8 @@ erDiagram
     User ||--o{ Account : "has many"
     User ||--o{ Manual : "uploaded"
     User ||--o{ Evaluation : "created"
-    User ||--o{ EvaluationAssignment : "assigned to"
+    User ||--o{ EvaluationAssignment : "is evaluated by (employeeId)"
+    User ||--o{ EvaluationAssignment : "evaluates (evaluatorId)"
     Position ||--|| Manual : "has one"
     Position ||--o{ Evaluation : "has many"
     Manual ||--o{ Evaluation : "has many"
@@ -146,5 +148,5 @@ erDiagram
 | Table | Constraint | Purpose |
 |-------|-----------|---------|
 | **Manual** | `positionId` unique | Enforces 1:1 relationship with Position |
-| **EvaluationAssignment** | `(evaluationId, employeeId)` | One assignment per employee per evaluation |
+| **EvaluationAssignment** | `(evaluationId, employeeId)` | Un solo evaluador por empleado por evaluacion |
 | **Response** | `(questionId, assignmentId)` | One response per question per assignment |

@@ -3,7 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-middleware";
 import { revalidatePath } from "next/cache";
-import { ingestManual, getManualStatus } from "@/lib/rag-client";
+import { getCargos } from "@/lib/rag-client";
 import type { ManualStatus } from "@/generated/prisma/client";
 
 export async function getPositionsWithoutManual() {
@@ -34,62 +34,55 @@ export async function getManuals(status?: ManualStatus) {
   return manuals;
 }
 
-export async function uploadManual(formData: FormData) {
-  await requireAuth({ roles: ["ADMIN", "HR"] });
+export async function registerManual(positionId: string) {
+  const session = await requireAuth({ roles: ["ADMIN", "HR"] });
 
-  const positionId = formData.get("positionId") as string;
-  const file = formData.get("file") as File;
-
-  if (!positionId || !file) {
-    return { success: false, error: "Faltan datos requeridos" };
-  }
-
-  // Get position name for the RAG service
   const position = await prisma.position.findUnique({
     where: { id: positionId },
     select: { name: true },
   });
 
-  if (!position) {
-    return { success: false, error: "Cargo no encontrado" };
-  }
+  if (!position) return { success: false, error: "Cargo no encontrado" };
 
-  // Save manual metadata as PENDING
   let manualId: string;
   try {
     const manual = await prisma.manual.create({
       data: {
-        fileName: file.name,
+        fileName: position.name,
         positionId,
-        uploadedById: "", // Will be set after auth check
+        uploadedById: session.user.id,
         status: "PENDING",
       },
     });
     manualId = manual.id;
   } catch {
-    return { success: false, error: "No se pudo guardar el manual. Verificá que el cargo no tenga ya un manual." };
+    return { success: false, error: "El cargo ya tiene un manual registrado" };
   }
 
-  // Call RAG ingest
-  const result = await ingestManual(file, position.name, positionId);
+  const result = await getCargos();
 
   if (!result.success) {
-    // Update status to ERROR
-    await prisma.manual.update({
-      where: { id: manualId },
-      data: { status: "ERROR" },
-    });
+    await prisma.manual.update({ where: { id: manualId }, data: { status: "ERROR" } });
     revalidatePath("/manuals");
     return { success: false, error: result.error };
   }
 
-  // Update status to PROCESSING and store externalRef
+  const exists = result.data.cargos.some(
+    (c) => c.toLowerCase() === position.name.toLowerCase(),
+  );
+
+  if (!exists) {
+    await prisma.manual.update({ where: { id: manualId }, data: { status: "ERROR" } });
+    revalidatePath("/manuals");
+    return {
+      success: false,
+      error: `"${position.name}" no está indexado en el sistema RAG. Cargos disponibles: ${result.data.cargos.join(", ")}`,
+    };
+  }
+
   await prisma.manual.update({
     where: { id: manualId },
-    data: {
-      status: "PROCESSING",
-      externalRef: result.data.externalRef,
-    },
+    data: { status: "PROCESSED", externalRef: position.name },
   });
 
   revalidatePath("/manuals");
@@ -97,11 +90,20 @@ export async function uploadManual(formData: FormData) {
   return { success: true };
 }
 
+export async function syncManualsWithRag() {
+  await requireAuth({ roles: ["ADMIN", "HR"] });
+  const { syncWithRag } = await import("@/lib/rag-sync");
+  const result = await syncWithRag();
+  if (!result) return { success: false, error: "No se pudo conectar con el servicio RAG" };
+  revalidatePath("/manuals");
+  revalidatePath("/positions");
+  return { success: true, data: result };
+}
+
 export async function deleteManual(id: string) {
   await requireAuth({ roles: ["ADMIN", "HR"] });
 
   try {
-    // Check for active evaluations
     const evaluations = await prisma.evaluation.count({
       where: {
         manualId: id,
@@ -123,45 +125,4 @@ export async function deleteManual(id: string) {
   } catch {
     return { success: false, error: "No se pudo eliminar el manual" };
   }
-}
-
-export async function refreshManualStatus(id: string) {
-  const manual = await prisma.manual.findUnique({
-    where: { id },
-    select: { id: true, externalRef: true, status: true },
-  });
-
-  if (!manual || !manual.externalRef) {
-    return manual;
-  }
-
-  const result = await getManualStatus(manual.externalRef);
-
-  if (!result.success) {
-    return manual;
-  }
-
-  // Map RAG status to ManualStatus
-  const statusMap: Record<string, ManualStatus> = {
-    processing: "PROCESSING",
-    ready: "PROCESSED",
-    error: "ERROR",
-  };
-
-  const newStatus = statusMap[result.data.status] ?? manual.status;
-
-  if (newStatus !== manual.status) {
-    await prisma.manual.update({
-      where: { id },
-      data: { status: newStatus },
-    });
-  }
-
-  return prisma.manual.findUnique({
-    where: { id },
-    include: {
-      position: { select: { id: true, name: true } },
-      uploadedBy: { select: { id: true, name: true } },
-    },
-  });
 }

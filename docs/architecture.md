@@ -264,7 +264,7 @@ El sistema define tres roles mediante un campo `role` en el modelo `User`. No se
 |-----|-------------|
 | `ADMIN` | Administrador del sistema. Gestiona la organizacion, usuarios y configuracion global. |
 | `HR` | Recursos Humanos. Carga manuales de funciones, crea evaluaciones, asigna evaluaciones a empleados y revisa resultados. |
-| `EMPLOYEE` | Empleado. Completa las evaluaciones que le son asignadas. |
+| `EMPLOYEE` | Empleado o evaluador. Puede ser el sujeto evaluado o quien realiza la evaluacion segun la asignacion. |
 
 La autorizacion se basa en un **campo simple de rol** (`enum Role`) en el modelo `User`. La verificacion de permisos se realiza comparando el valor del campo `role` contra los roles permitidos para cada operacion.
 
@@ -498,10 +498,10 @@ Estado de una pregunta generada por el servicio RAG.
 
 ### AssignmentStatus
 
-Estado de la asignacion de una evaluacion a un empleado especifico.
+Estado de la asignacion de una evaluacion. Cada asignacion vincula un empleado evaluado (`employeeId`), un evaluador (`evaluatorId`) y una evaluacion. El evaluador es quien responde las preguntas Likert sobre el desempeño del empleado asignado.
 
 | Valor | Descripcion |
 |-------|-------------|
-| `PENDING` | La evaluacion fue asignada pero el empleado aun no la inicio. |
-| `IN_PROGRESS` | El empleado comenzo a responder la evaluacion. |
-| `COMPLETED` | El empleado finalizo la evaluacion y envio sus respuestas. |
+| `PENDING` | La asignacion fue creada pero el evaluador aun no ha iniciado la evaluacion. |
+| `IN_PROGRESS` | El evaluador inicio la evaluacion y tiene respuestas parciales. |
+| `COMPLETED` | El evaluador finalizo y envio todas las respuestas. El puntaje fue calculado. |

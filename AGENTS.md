@@ -124,12 +124,12 @@ Component (TanStack Form) → Feature Hook (TanStack Query) → Server Action (Z
 
 ## Important Domain Rules
 
-1. **Questions have NO dimension/category field.** They are a flat list. The only "dimensions" are the 3 IAP rating fields (pertinencia, coherencia, adecuacion) that HR rates during review.
+1. **Questions have NO dimension/category field.** They are a flat list. The only "dimensions" are the 3 IAP rating fields (pertinencia, coherencia, adecuacion) that HR rates during review. Questions DO have `pillar`, `manualReference`, and `scoringGuide` from the RAG response.
 2. **Manual → Position is 1:1.** One manual per position.
 3. **Evaluation can only be activated when ALL questions are reviewed** (approved or edited, not pending/rejected).
-4. **Employee self-evaluation only** (not 360-degree).
+4. **Evaluator model (NOT self-evaluation).** Each `EvaluationAssignment` has an `employeeId` (who is being evaluated) and an `evaluatorId` (who fills in the evaluation — typically the direct manager). HR assigns both when creating an assignment.
 5. **RAG service is external HTTP.** Never expose it to the browser. All calls go through Server Actions.
-6. **MOCK_RAG=true** env var enables mock responses for development without the RAG service.
+6. The `/my-evaluations` route shows assignments where the logged-in user is the **evaluator** (not the employee being evaluated).
 
 ## Prisma v7 Specifics
 

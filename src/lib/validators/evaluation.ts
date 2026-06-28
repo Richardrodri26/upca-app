@@ -6,7 +6,7 @@ import { z } from "zod";
 
 export const generateEvaluationSchema = z.object({
   positionId: z.string().min(1, { error: "El ID del cargo es requerido" }),
-  questionCount: z.number().int().min(10).max(20).default(15),
+  enfoque: z.string().optional(),
 });
 
 export type GenerateEvaluationInput = z.infer<typeof generateEvaluationSchema>;

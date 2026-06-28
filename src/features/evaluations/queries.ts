@@ -44,11 +44,11 @@ export function useGenerateEvaluation() {
   return useMutation({
     mutationFn: ({
       positionId,
-      questionCount,
+      enfoque,
     }: {
       positionId: string;
-      questionCount?: number;
-    }) => generateEvaluation(positionId, questionCount),
+      enfoque?: string;
+    }) => generateEvaluation(positionId, enfoque),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["evaluations"] });
     },

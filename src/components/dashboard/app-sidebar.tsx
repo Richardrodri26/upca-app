@@ -22,14 +22,22 @@ type AppSidebarProps = {
   };
 };
 
-const navItems = [
+const adminHrItems = [
   { label: "Dashboard", href: "/" },
   { label: "Cargos", href: "/positions" },
   { label: "Manuales", href: "/manuals" },
   { label: "Evaluaciones", href: "/evaluations" },
 ];
 
+const employeeItems = [
+  { label: "Dashboard", href: "/" },
+  { label: "Mis Evaluaciones", href: "/my-evaluations" },
+];
+
 export function AppSidebar({ user }: AppSidebarProps) {
+  const isAdminOrHr = user.role === "ADMIN" || user.role === "HR";
+  const navItems = isAdminOrHr ? adminHrItems : employeeItems;
+
   return (
     <Sidebar>
       <SidebarHeader>
@@ -57,15 +65,6 @@ export function AppSidebar({ user }: AppSidebarProps) {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
-              {(user.role === "ADMIN" || user.role === "HR") && (
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    render={(props) => <a href="/results" {...props} />}
-                  >
-                    Resultados
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

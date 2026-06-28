@@ -5,7 +5,7 @@ import { useSession } from "@/features/auth/hooks/use-session";
 import { useQuery } from "@tanstack/react-query";
 import {
   useEvaluationAssignments,
-  useEmployees,
+  useUsers,
   useAssignEvaluation,
 } from "@/features/assignments/queries";
 import { getEvaluation } from "@/features/evaluations/actions";
@@ -41,7 +41,7 @@ export default function AssignmentsPage({
   });
 
   const { data: assignments = [] } = useEvaluationAssignments(id);
-  const { data: employees = [] } = useEmployees();
+  const { data: users = [] } = useUsers();
   const assignMutation = useAssignEvaluation();
 
   if (session?.user?.role !== "ADMIN" && session?.user?.role !== "HR") {
@@ -52,7 +52,7 @@ export default function AssignmentsPage({
     );
   }
 
-  const alreadyAssigned = assignments.map((a) => a.employeeId);
+  const alreadyAssignedEmployeeIds = assignments.map((a) => a.employeeId);
 
   return (
     <div className="flex flex-col gap-6">
@@ -66,20 +66,19 @@ export default function AssignmentsPage({
       </div>
 
       <EmployeeSelector
-        employees={employees}
-        alreadyAssigned={alreadyAssigned}
-        onAssign={(employeeIds) =>
-          assignMutation.mutate({ evaluationId: id, employeeIds })
-        }
+        users={users}
+        alreadyAssignedEmployeeIds={alreadyAssignedEmployeeIds}
+        onAssign={(pairs) => assignMutation.mutate({ evaluationId: id, pairs })}
         isAssigning={assignMutation.isPending}
       />
 
       {assignMutation.data && (
         <p className="text-sm text-muted-foreground">
-          {assignMutation.data.created} asignado
+          {assignMutation.data.created} asignación
+          {assignMutation.data.created !== 1 ? "es" : ""} creada
           {assignMutation.data.created !== 1 ? "s" : ""}
           {(assignMutation.data?.skipped ?? 0) > 0 &&
-            `, ${assignMutation.data.skipped} ya tenían asignación`}
+            `, ${assignMutation.data.skipped} ya existían`}
         </p>
       )}
 
@@ -96,8 +95,8 @@ export default function AssignmentsPage({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Empleado</TableHead>
-                  <TableHead>Email</TableHead>
+                  <TableHead>Empleado evaluado</TableHead>
+                  <TableHead>Evaluador</TableHead>
                   <TableHead>Estado</TableHead>
                   <TableHead>Puntaje</TableHead>
                 </TableRow>
@@ -105,11 +104,17 @@ export default function AssignmentsPage({
               <TableBody>
                 {assignments.map((a) => (
                   <TableRow key={a.id}>
-                    <TableCell className="font-medium">
-                      {a.employee.name}
+                    <TableCell>
+                      <div className="font-medium">{a.employee.name}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {a.employee.email}
+                      </div>
                     </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {a.employee.email}
+                    <TableCell>
+                      <div className="font-medium">{a.evaluator.name}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {a.evaluator.email}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <AssignmentStatusBadge status={a.status} />

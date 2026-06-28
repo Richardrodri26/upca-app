@@ -3,7 +3,7 @@ import {
   getEvaluationAssignments,
   getMyAssignments,
   getAssignment,
-  getEmployees,
+  getUsers,
   assignEvaluation,
   submitResponse,
   completeAssignment,
@@ -34,10 +34,10 @@ export function useAssignment(assignmentId: string) {
   });
 }
 
-export function useEmployees() {
+export function useUsers() {
   return useQuery({
-    queryKey: ["employees"],
-    queryFn: () => getEmployees(),
+    queryKey: ["users"],
+    queryFn: () => getUsers(),
     staleTime: 5 * 60 * 1000,
   });
 }
@@ -49,11 +49,11 @@ export function useAssignEvaluation() {
   return useMutation({
     mutationFn: ({
       evaluationId,
-      employeeIds,
+      pairs,
     }: {
       evaluationId: string;
-      employeeIds: string[];
-    }) => assignEvaluation(evaluationId, employeeIds),
+      pairs: { employeeId: string; evaluatorId: string }[];
+    }) => assignEvaluation(evaluationId, pairs),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
         queryKey: ["assignments", variables.evaluationId],

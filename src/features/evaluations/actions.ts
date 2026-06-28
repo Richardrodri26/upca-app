@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-middleware";
 import { revalidatePath } from "next/cache";
 import { generateEvaluation as ragGenerate } from "@/lib/rag-client";
+
+const DEFAULT_ENFOQUE = "Desempeño general de funciones y responsabilidades";
 import type { EvaluationStatus, QuestionStatus } from "@/generated/prisma/client";
 
 // ────────────────────────────────────────
@@ -61,16 +63,15 @@ export async function getPositionsWithProcessedManual() {
 
 export async function generateEvaluation(
   positionId: string,
-  questionCount = 15,
+  enfoque?: string,
 ) {
-  await requireAuth({ roles: ["ADMIN", "HR"] });
+  const session = await requireAuth({ roles: ["ADMIN", "HR"] });
 
-  // Look up position and its manual
   const position = await prisma.position.findUnique({
     where: { id: positionId },
     include: {
       manual: {
-        select: { id: true, externalRef: true, status: true },
+        select: { id: true, status: true },
       },
     },
   });
@@ -82,22 +83,14 @@ export async function generateEvaluation(
   if (!position.manual || position.manual.status !== "PROCESSED") {
     return {
       success: false,
-      error: "El cargo no tiene un manual procesado",
+      error: "El cargo no tiene un manual registrado en el sistema RAG",
     };
   }
 
-  if (!position.manual.externalRef) {
-    return {
-      success: false,
-      error: "El manual no tiene referencia externa",
-    };
-  }
-
-  // Call RAG service
+  // Call RAG service with cargo name + enfoque
   const result = await ragGenerate(
-    position.manual.externalRef,
     position.name,
-    questionCount,
+    enfoque?.trim() || DEFAULT_ENFOQUE,
   );
 
   if (!result.success) {
@@ -113,7 +106,7 @@ export async function generateEvaluation(
         generationTime: result.data.generationTimeMs / 1000,
         positionId: position.id,
         manualId: position.manual!.id,
-        createdById: "", // Will be set after auth lookup
+        createdById: session.user.id,
       },
     });
 
@@ -122,6 +115,9 @@ export async function generateEvaluation(
         text: q.text,
         order: i + 1,
         status: "PENDING" as QuestionStatus,
+        pillar: q.pillar,
+        manualReference: q.manualReference,
+        scoringGuide: q.scoringGuide,
         evaluationId: eval_.id,
       })),
     });

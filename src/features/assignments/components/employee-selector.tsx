@@ -1,118 +1,159 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-type Employee = {
+type User = {
   id: string;
   name: string;
   email: string;
 };
 
-type EmployeeSelectorProps = {
-  employees: Employee[];
-  alreadyAssigned: string[];
-  onAssign: (employeeIds: string[]) => void;
+type Pair = {
+  employee: User;
+  evaluator: User;
+};
+
+type AssignmentFormProps = {
+  users: User[];
+  alreadyAssignedEmployeeIds: string[];
+  onAssign: (pairs: { employeeId: string; evaluatorId: string }[]) => void;
   isAssigning: boolean;
 };
 
+function UserSelect({
+  label,
+  users,
+  value,
+  onChange,
+}: {
+  label: string;
+  users: User[];
+  value: string;
+  onChange: (id: string) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label className="text-sm font-medium">{label}</label>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-xs"
+      >
+        <option value="">Seleccionar...</option>
+        {users.map((u) => (
+          <option key={u.id} value={u.id}>
+            {u.name} — {u.email}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
 export function EmployeeSelector({
-  employees,
-  alreadyAssigned,
+  users,
+  alreadyAssignedEmployeeIds,
   onAssign,
   isAssigning,
-}: EmployeeSelectorProps) {
-  const [search, setSearch] = useState("");
-  const [selected, setSelected] = useState<Set<string>>(new Set());
+}: AssignmentFormProps) {
+  const [employeeId, setEmployeeId] = useState("");
+  const [evaluatorId, setEvaluatorId] = useState("");
+  const [pending, setPending] = useState<Pair[]>([]);
 
-  const filtered = useMemo(() => {
-    if (!search) return employees;
-    const q = search.toLowerCase();
-    return employees.filter(
-      (e) =>
-        e.name.toLowerCase().includes(q) ||
-        e.email.toLowerCase().includes(q),
-    );
-  }, [employees, search]);
+  const availableEmployees = users.filter(
+    (u) =>
+      !alreadyAssignedEmployeeIds.includes(u.id) &&
+      !pending.some((p) => p.employee.id === u.id),
+  );
 
-  const toggle = (id: string) => {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+  const handleAdd = () => {
+    const employee = users.find((u) => u.id === employeeId);
+    const evaluator = users.find((u) => u.id === evaluatorId);
+    if (!employee || !evaluator) return;
+    setPending((prev) => [...prev, { employee, evaluator }]);
+    setEmployeeId("");
+    setEvaluatorId("");
   };
 
-  const handleAssign = () => {
-    if (selected.size === 0) return;
-    onAssign(Array.from(selected));
-    setSelected(new Set());
+  const handleRemove = (employeeId: string) => {
+    setPending((prev) => prev.filter((p) => p.employee.id !== employeeId));
   };
+
+  const handleSubmit = () => {
+    if (pending.length === 0) return;
+    onAssign(pending.map((p) => ({ employeeId: p.employee.id, evaluatorId: p.evaluator.id })));
+    setPending([]);
+  };
+
+  const canAdd = !!employeeId && !!evaluatorId;
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Asignar a empleados</CardTitle>
+        <CardTitle className="text-base">Nueva asignación</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
-        <Input
-          placeholder="Buscar por nombre o email..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-
-        <div className="max-h-64 overflow-y-auto flex flex-col gap-2">
-          {filtered.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-4 text-center">
-              No se encontraron empleados
-            </p>
-          ) : (
-            filtered.map((emp) => {
-              const isAssigned = alreadyAssigned.includes(emp.id);
-              return (
-                <div
-                  key={emp.id}
-                  className="flex items-center gap-3 py-1"
-                >
-                  <Checkbox
-                    id={`emp-${emp.id}`}
-                    checked={selected.has(emp.id)}
-                    onCheckedChange={() => toggle(emp.id)}
-                    disabled={isAssigned}
-                  />
-                  <Label
-                    htmlFor={`emp-${emp.id}`}
-                    className={`flex-1 cursor-pointer ${isAssigned ? "text-muted-foreground" : ""}`}
-                  >
-                    <span className="font-medium">{emp.name}</span>
-                    <span className="text-muted-foreground ml-2 text-sm">
-                      {emp.email}
-                    </span>
-                    {isAssigned && (
-                      <span className="text-xs text-muted-foreground ml-2">
-                        — Ya asignado
-                      </span>
-                    )}
-                  </Label>
-                </div>
-              );
-            })
-          )}
+        <div className="grid grid-cols-2 gap-4">
+          <UserSelect
+            label="Empleado evaluado"
+            users={availableEmployees}
+            value={employeeId}
+            onChange={setEmployeeId}
+          />
+          <UserSelect
+            label="Evaluador (jefe directo)"
+            users={users}
+            value={evaluatorId}
+            onChange={setEvaluatorId}
+          />
         </div>
 
         <Button
-          onClick={handleAssign}
-          disabled={selected.size === 0 || isAssigning}
+          variant="outline"
+          onClick={handleAdd}
+          disabled={!canAdd}
+          className="self-start"
         >
-          {isAssigning
-            ? "Asignando..."
-            : `Asignar evaluación (${selected.size})`}
+          + Agregar par
         </Button>
+
+        {pending.length > 0 && (
+          <div className="flex flex-col gap-2 border rounded-md p-3">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              Por asignar ({pending.length})
+            </p>
+            {pending.map((p) => (
+              <div
+                key={p.employee.id}
+                className="flex items-center justify-between text-sm"
+              >
+                <span>
+                  <span className="font-medium">{p.employee.name}</span>
+                  <span className="text-muted-foreground mx-2">evaluado por</span>
+                  <span className="font-medium">{p.evaluator.name}</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleRemove(p.employee.id)}
+                  className="text-muted-foreground hover:text-destructive text-xs"
+                >
+                  Quitar
+                </button>
+              </div>
+            ))}
+            <Button
+              onClick={handleSubmit}
+              disabled={isAssigning}
+              className="mt-1"
+            >
+              {isAssigning
+                ? "Asignando..."
+                : `Confirmar ${pending.length} asignación${pending.length !== 1 ? "es" : ""}`}
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

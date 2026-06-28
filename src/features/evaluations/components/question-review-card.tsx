@@ -11,24 +11,19 @@ import {
 import { QuestionStatusBadge } from "./evaluation-status-badge";
 import type { QuestionStatus } from "@/generated/prisma/client";
 
-// ────────────────────────────────────────
-// Types
-// ────────────────────────────────────────
-
 type QuestionData = {
   id: string;
   text: string;
   order: number;
   status: QuestionStatus;
   originalText: string | null;
+  pillar: string | null;
+  manualReference: string | null;
+  scoringGuide: string | null;
   relevanceRating: number | null;
   coherenceRating: number | null;
   adequacyRating: number | null;
 };
-
-// ────────────────────────────────────────
-// Rating Star Selector
-// ────────────────────────────────────────
 
 function RatingSelector({
   label,
@@ -62,10 +57,6 @@ function RatingSelector({
   );
 }
 
-// ────────────────────────────────────────
-// Component
-// ────────────────────────────────────────
-
 type QuestionReviewCardProps = {
   question: QuestionData;
   onApprove: (id: string) => void;
@@ -90,10 +81,10 @@ export function QuestionReviewCard({
 }: QuestionReviewCardProps) {
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState(question.text);
-
   const [showOriginal, setShowOriginal] = useState(false);
-  const hasOriginal =
-    question.originalText && question.status === "EDITED";
+  const [showGuide, setShowGuide] = useState(false);
+
+  const hasOriginal = question.originalText && question.status === "EDITED";
 
   const handleSaveEdit = () => {
     if (editText.trim().length >= 10 && editText !== question.text) {
@@ -105,11 +96,23 @@ export function QuestionReviewCard({
   return (
     <Card>
       <CardHeader className="flex flex-row items-start justify-between pb-2">
-        <div className="flex items-center gap-3">
-          <span className="text-sm font-bold text-muted-foreground tabular-nums">
-            {question.order}.
-          </span>
-          <QuestionStatusBadge status={question.status} />
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-bold text-muted-foreground tabular-nums">
+              {question.order}.
+            </span>
+            <QuestionStatusBadge status={question.status} />
+            {question.pillar && (
+              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                {question.pillar}
+              </span>
+            )}
+          </div>
+          {question.manualReference && (
+            <span className="text-xs text-muted-foreground pl-6">
+              Ref: {question.manualReference}
+            </span>
+          )}
         </div>
         <div className="flex gap-1">
           {question.status !== "APPROVED" && (
@@ -144,22 +147,19 @@ export function QuestionReviewCard({
           )}
         </div>
       </CardHeader>
+
       <CardContent className="flex flex-col gap-4">
-        {/* Text display / edit */}
+        {/* Afirmación (texto de la pregunta) */}
         {editing ? (
           <div className="flex flex-col gap-2">
             <Textarea
               value={editText}
               onChange={(e) => setEditText(e.target.value)}
               rows={3}
-              placeholder="Editar texto de la pregunta..."
+              placeholder="Editar afirmación..."
             />
             <div className="flex gap-2 justify-end">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setEditing(false)}
-              >
+              <Button variant="ghost" size="sm" onClick={() => setEditing(false)}>
                 Cancelar
               </Button>
               <Button size="sm" onClick={handleSaveEdit}>
@@ -171,7 +171,7 @@ export function QuestionReviewCard({
           <p className="text-sm leading-relaxed">{question.text}</p>
         )}
 
-        {/* Original AI text (toggle) */}
+        {/* Texto original IA */}
         {hasOriginal && (
           <div>
             <button
@@ -179,50 +179,68 @@ export function QuestionReviewCard({
               className="text-xs text-muted-foreground hover:underline"
               onClick={() => setShowOriginal(!showOriginal)}
             >
-              {showOriginal ? "Ocultar" : "Ver"} texto original (IA)
+              {showOriginal ? "Ocultar" : "Ver"} afirmación original (IA)
             </button>
             {showOriginal && (
-              <p className="text-sm text-muted-foreground italic border-l-2 pl-3 mt-2">
+              <p className="mt-2 border-l-2 pl-3 text-sm italic text-muted-foreground">
                 {question.originalText}
               </p>
             )}
           </div>
         )}
 
+        {/* Guía de evaluación min/max */}
+        {question.scoringGuide && (
+          <div className="border-t pt-3">
+            <button
+              type="button"
+              className="text-xs text-muted-foreground hover:underline"
+              onClick={() => setShowGuide(!showGuide)}
+            >
+              {showGuide ? "Ocultar" : "Ver"} guía de calificación (1–5)
+            </button>
+            {showGuide && (
+              <p className="mt-2 rounded-md bg-muted/50 p-3 text-xs leading-relaxed text-muted-foreground">
+                {question.scoringGuide}
+              </p>
+            )}
+          </div>
+        )}
+
         {/* IAP Ratings */}
-        <div className="flex flex-wrap gap-6 pt-2 border-t">
+        <div className="flex flex-wrap gap-6 border-t pt-3">
           <RatingSelector
             label="Pertinencia"
             value={question.relevanceRating}
-            onChange={(v) => {
+            onChange={(v) =>
               onRate(question.id, {
                 relevanceRating: v,
                 coherenceRating: question.coherenceRating ?? 0,
                 adequacyRating: question.adequacyRating ?? 0,
-              });
-            }}
+              })
+            }
           />
           <RatingSelector
             label="Coherencia"
             value={question.coherenceRating}
-            onChange={(v) => {
+            onChange={(v) =>
               onRate(question.id, {
                 relevanceRating: question.relevanceRating ?? 0,
                 coherenceRating: v,
                 adequacyRating: question.adequacyRating ?? 0,
-              });
-            }}
+              })
+            }
           />
           <RatingSelector
             label="Adecuación"
             value={question.adequacyRating}
-            onChange={(v) => {
+            onChange={(v) =>
               onRate(question.id, {
                 relevanceRating: question.relevanceRating ?? 0,
                 coherenceRating: question.coherenceRating ?? 0,
                 adequacyRating: v,
-              });
-            }}
+              })
+            }
           />
         </div>
       </CardContent>
