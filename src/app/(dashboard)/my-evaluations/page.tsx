@@ -41,6 +41,13 @@ export default function MyEvaluationsPage() {
                   <p className="text-sm text-muted-foreground">
                     {assignment.evaluation.position.name}
                   </p>
+                  <p className="text-sm mt-1">
+                    <span className="text-muted-foreground">Evaluando a: </span>
+                    <span className="font-medium">{assignment.employee.name}</span>
+                    <span className="text-muted-foreground ml-1 text-xs">
+                      ({assignment.employee.email})
+                    </span>
+                  </p>
                 </div>
                 <AssignmentStatusBadge status={assignment.status} />
               </CardHeader>
