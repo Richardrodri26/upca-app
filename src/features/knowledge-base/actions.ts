@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAuth } from "@/lib/auth-middleware";
+import { syncPositionAndManual } from "@/lib/position-manual-sync";
 import { prisma } from "@/lib/prisma";
 import {
   eliminarCargoRAG,
@@ -74,58 +75,27 @@ export async function guardarCargo(
   const cargoName =
     cargoMatch?.[1] ?? nombre_archivo.replace(".md", "").replace(/_/g, " ");
 
-  // Sync: create Position in our DB if it doesn't exist yet
-  let positionId: string | null = null;
+  // Sync: ensure Position + PROCESSED Manual exist in our DB.
+  // RAG save already succeeded — DB failure is a REPORTABLE partial success,
+  // NOT a silent swallow.
+  let syncWarning: string | undefined;
   try {
-    const existing = await prisma.position.findFirst({
-      where: { name: { equals: cargoName, mode: "insensitive" } },
-      select: { id: true },
+    await syncPositionAndManual({
+      cargoName,
+      fileName: nombre_archivo,
+      uploadedById: session.user.id,
     });
-
-    if (existing) {
-      positionId = existing.id;
-    } else {
-      const created = await prisma.position.create({
-        data: { name: cargoName, department: "Sin departamento" },
-      });
-      positionId = created.id;
-    }
-
-    // Create or update Manual record
-    const existingManual = await prisma.manual.findFirst({
-      where: { positionId },
-      select: { id: true },
-    });
-
-    if (!existingManual) {
-      await prisma.manual.create({
-        data: {
-          fileName: nombre_archivo,
-          positionId,
-          uploadedById: session.user.id,
-          status: "PROCESSED",
-          externalRef: cargoName,
-        },
-      });
-    } else {
-      await prisma.manual.update({
-        where: { id: existingManual.id },
-        data: {
-          fileName: nombre_archivo,
-          status: "PROCESSED",
-          externalRef: cargoName,
-        },
-      });
-    }
-  } catch {
-    // DB sync is best-effort — RAG save succeeded either way
+  } catch (e) {
+    console.error("[KB] Sincronización DB falló tras guardar en RAG:", e);
+    syncWarning =
+      "Guardado en RAG, pero la sincronización con la base local falló. Usá 'Sincronizar' en Manuales.";
   }
 
   revalidatePath("/knowledge-base");
   revalidatePath("/manuals");
   revalidatePath("/positions");
 
-  return { success: true as const, data: result.data };
+  return { success: true as const, data: result.data, warning: syncWarning };
 }
 
 export async function obtenerContenidoCargo(cargo: string) {
@@ -161,20 +131,24 @@ export async function eliminarCargo(cargo: string) {
     return { success: false as const, error: result.error };
   }
 
-  // Remove Manual record from DB so the cargo is no longer linked
+  // Remove Manual record from DB so the cargo is no longer linked.
+  // RAG deletion already succeeded — DB failure is a REPORTABLE partial success.
+  let syncWarning: string | undefined;
   try {
     await prisma.manual.deleteMany({
       where: { externalRef: { equals: cargo, mode: "insensitive" } },
     });
-  } catch {
-    // best-effort
+  } catch (e) {
+    console.error("[KB] Eliminación DB falló tras eliminar en RAG:", e);
+    syncWarning =
+      "Eliminado del RAG, pero la sincronización con la base local falló. Revisá manuales huérfanos.";
   }
 
   revalidatePath("/knowledge-base");
   revalidatePath("/manuals");
   revalidatePath("/positions");
 
-  return { success: true as const };
+  return { success: true as const, warning: syncWarning };
 }
 
 export async function getKnowledgeBaseCargos() {
