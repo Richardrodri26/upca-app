@@ -16,6 +16,7 @@ import {
 import { AssignmentStatusBadge } from "@/features/assignments/components/assignment-status-badge";
 import { useSession } from "@/features/auth/hooks/use-session";
 import { useEvaluationResults } from "@/features/results/queries";
+import { buildResultsCsv } from "@/features/results/utils/export-csv";
 import { metricColor } from "@/features/results/utils/iap";
 
 export default function EvaluationResultsPage({
@@ -62,6 +63,18 @@ export default function EvaluationResultsPage({
   const iapColor = metricColor(results.iap);
   const irtoColor = metricColor(results.irto);
 
+  const handleExport = () => {
+    if (!results) return;
+    const csv = buildResultsCsv(results);
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `resultados-${results.evaluation.title.replace(/[^\w\dáéíóúñ-]+/gi, "-").toLowerCase()}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
@@ -75,7 +88,8 @@ export default function EvaluationResultsPage({
         </div>
         <Button
           variant="outline"
-          onClick={() => {}}
+          onClick={handleExport}
+          disabled={!results}
           title="Exportar Resultados"
         >
           Exportar Resultados

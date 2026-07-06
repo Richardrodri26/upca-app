@@ -29,16 +29,22 @@ const adminHrItems = [
   { label: "Base de Conocimientos", href: "/knowledge-base" },
   { label: "Evaluaciones", href: "/evaluations" },
   { label: "Mis Evaluaciones", href: "/my-evaluations" },
+  { label: "Mis Resultados", href: "/my-results" },
 ];
+
+const adminOnlyItems = [{ label: "Usuarios", href: "/users" }];
 
 const employeeItems = [
   { label: "Dashboard", href: "/" },
   { label: "Mis Evaluaciones", href: "/my-evaluations" },
+  { label: "Mis Resultados", href: "/my-results" },
 ];
 
 export function AppSidebar({ user }: AppSidebarProps) {
   const isAdminOrHr = user.role === "ADMIN" || user.role === "HR";
-  const navItems = isAdminOrHr ? adminHrItems : employeeItems;
+  const isAdmin = user.role === "ADMIN";
+  const baseItems = isAdminOrHr ? adminHrItems : employeeItems;
+  const navItems = isAdmin ? [...baseItems, ...adminOnlyItems] : baseItems;
 
   return (
     <Sidebar>

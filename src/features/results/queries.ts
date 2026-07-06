@@ -4,6 +4,7 @@ import {
   getDashboardStatsForEmployee,
   getEmployeeResults,
   getEvaluationResults,
+  getMyResults,
 } from "./actions";
 
 export function useDashboardStats() {
@@ -35,5 +36,12 @@ export function useEmployeeResults(evaluationId: string, employeeId: string) {
     queryKey: ["employee-results", evaluationId, employeeId],
     queryFn: () => getEmployeeResults(evaluationId, employeeId),
     enabled: !!evaluationId && !!employeeId,
+  });
+}
+
+export function useMyResults() {
+  return useQuery({
+    queryKey: ["my-results"],
+    queryFn: () => getMyResults(),
   });
 }

@@ -234,3 +234,28 @@ export async function getEmployeeResults(
     })),
   };
 }
+
+// ────────────────────────────────────────
+// My results (employee self-view)
+// ────────────────────────────────────────
+
+export async function getMyResults() {
+  const session = await requireAuth();
+
+  const assignments = await prisma.evaluationAssignment.findMany({
+    where: { employeeId: session.user.id, status: "COMPLETED" },
+    include: {
+      evaluation: {
+        select: {
+          id: true,
+          title: true,
+          status: true,
+          position: { select: { name: true } },
+        },
+      },
+    },
+    orderBy: { completedAt: "desc" },
+  });
+
+  return assignments;
+}
