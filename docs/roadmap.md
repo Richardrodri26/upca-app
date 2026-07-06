@@ -61,17 +61,17 @@
 
 **Plan**: [docs/plans/phase-3-positions-manuals.md](./plans/phase-3-positions-manuals.md)
 **Depende de**: Phase 2
-**RAG**: Parcial — upload funciona sin RAG, ingesta necesita RAG o mock
+**RAG**: Integrado — ingesta vía servicio RAG real (`POST /api/base_conocimiento/procesar`)
 
 - [x] 3.1 RAG service client (src/lib/rag-client.ts)
 - [x] 3.2 Position feature (queries, mutations, actions)
 - [x] 3.3 Position pages (list, detail, form dialog)
 - [x] 3.4 Manual feature (queries, mutations, actions)
 - [x] 3.5 Manual pages (list, upload dialog, status badges)
-- [x] 3.6 Mock RAG service (MOCK_RAG env var)
+- [x] 3.6 Integración con servicio RAG real (endpoints en `docs/DOCUMENTACION_API.md`)
 
 **Notas**:
-- 2026-06-15: Phase 3 completado. CRUD de cargos con tabla, formulario (TanStack Form) y vista detalle. Manuales con upload dialog, status badges, polling de estado. Cliente RAG con mock mode (MOCK_RAG=true). Roles: solo ADMIN/HR pueden modificar. Select de departamentos y filtros funcionando.
+- 2026-06-15: Phase 3 completado. CRUD de cargos con tabla, formulario (TanStack Form) y vista detalle. Manuales con upload dialog, status badges, polling de estado. Cliente RAG integrado al servicio real del compañero (ver `docs/DOCUMENTACION_API.md`). Roles: solo ADMIN/HR pueden modificar. Select de departamentos y filtros funcionando.
 
 ---
 
@@ -134,13 +134,15 @@
 
 | Fase nuestra | Que necesitamos del RAG | Estado RAG |
 |--------------|------------------------|------------|
-| Phase 0-2 | Nada — usamos mock | N/A |
-| Phase 3 | POST /api/manuals/ingest | NOT_STARTED |
-| Phase 4 | POST /api/evaluations/generate | NOT_STARTED |
+| Phase 0-2 | Nada — datos en nuestra DB | N/A |
+| Phase 3 | `POST /api/base_conocimiento/procesar`, `POST .../guardar` (ingesta de manuales) | INTEGRATED |
+| Phase 4 | `POST /api/evaluacion/generar` (generación de evaluación Likert) | INTEGRATED |
+| Phase 3 aux | `GET /api/cargos`, `GET /api/base_conocimiento/contenido`, `DELETE .../eliminar` (listado, contenido y borrado de base de conocimiento) | INTEGRATED |
 | Phase 5-6 | Nada — datos ya en nuestra DB | N/A |
 
 **Guia para el companero**: [docs/rag-teammate-guide.md](./rag-teammate-guide.md)
-**Contrato API**: [docs/rag-api-contract.md](./rag-api-contract.md)
+**Contrato API (REAL)**: [docs/DOCUMENTACION_API.md](./DOCUMENTACION_API.md) — endpoints del servicio RAG del compañero; cliente en `src/lib/rag-client.ts`.
+**Contrato API (SUPERSEDED)**: [docs/rag-api-contract.md](./rag-api-contract.md) — diseño original, nunca implementado tal cual. Usar `DOCUMENTACION_API.md`.
 
 ---
 
@@ -167,5 +169,6 @@
 
 - 2026-06-15: Inicio de planificacion. Stack definido, arquitectura confirmada, ERD aprobado.
 - Prisma v7 tiene breaking changes: ESM, driver adapters, prisma.config.ts obligatorio. Ver docs/architecture.md.
-- RAG service es HTTP separado (FastAPI/Python). Mock disponible via MOCK_RAG=true.
-- Deploy: Vercel + Vercel Postgres. Se configura al final del proyecto.
+- RAG service es HTTP separado (FastAPI/Python por el compañero). Integración real completada (ver `docs/DOCUMENTACION_API.md` y `src/lib/rag-client.ts`); el modo mock fue retirado.
+- 2026-07-05: Feature de gestión de base de conocimientos RAG (`POST /api/base_conocimiento/procesar|guardar`, `GET .../contenido`, `DELETE .../eliminar`) añadida tras Phase 6, fuera de las fases originales. Refleja el contrato real del servicio del compañero.
+- Deploy: Vercel + Neon Postgres. Se configura al final del proyecto.

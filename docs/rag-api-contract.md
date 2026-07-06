@@ -1,3 +1,8 @@
+> ⚠️ **SUPERSEDED (2026-07)** — Este documento describe el contrato DISEÑADO
+> originalmente, que nunca se implementó tal cual. El contrato REAL del
+> servicio RAG está en [`DOCUMENTACION_API.md`](./DOCUMENTACION_API.md) y su
+> cliente en `src/lib/rag-client.ts`. Se conserva como registro de diseño.
+
 # RAG Service API Contract
 
 **Project**: UPCA App (Universidad / Thesis Project)

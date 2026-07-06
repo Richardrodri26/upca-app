@@ -32,7 +32,8 @@ This version has breaking changes — APIs, conventions, and file structure may 
 |----------|------|-----------------|
 | **Architecture** | `docs/architecture.md` | Stack, layers, folder structure, conventions, naming, security, tradeoffs. READ THIS FIRST. |
 | **ERD** | `docs/erd.md` | Mermaid entity-relationship diagram. 9 entities. Source of truth for the data model. |
-| **RAG API Contract** | `docs/rag-api-contract.md` | REST contract with the RAG service. 3 endpoints, Zod schemas, error codes. |
+| **RAG API Contract (REAL)** | `docs/DOCUMENTACION_API.md` | Contrato REAL del servicio RAG del compañero. Endpoints: `GET /api/cargos`, `POST /api/evaluacion/generar`, `POST /api/base_conocimiento/procesar|guardar`, `GET .../contenido`, `DELETE .../eliminar`. Cliente en `src/lib/rag-client.ts`. |
+| **RAG API Contract (SUPERSEDED)** | `docs/rag-api-contract.md` | Contrato DISEÑADO originalmente, nunca implementado tal cual. Conservado como registro de diseño. Usar `DOCUMENTACION_API.md` en su lugar. |
 | **Roadmap** | `docs/roadmap.md` | Phase tracker with checkboxes. Update `- [ ]` to `- [x]` and status when completing work. |
 | **Phase Plans** | `docs/plans/phase-{0..6}-*.md` | Step-by-step implementation plans per phase. Check which phase is current in roadmap.md. |
 
@@ -46,7 +47,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - **TanStack Query** — ALL data fetching (no useEffect fetching)
 - **shadcn/ui** — Installed via CLI to `src/components/ui/`. Do NOT npm install component packages.
 - **Tailwind CSS 4** + **Biome 2.2.0** (no ESLint, no Prettier)
-- **PostgreSQL** via Docker (local) / Vercel Postgres (prod)
+- **PostgreSQL** via Docker (local) / Neon Postgres (prod)
 - **pnpm** as package manager
 
 ## Project Structure
@@ -103,7 +104,7 @@ Component (TanStack Form) → Feature Hook (TanStack Query) → Server Action (Z
 ### Auth Pattern
 - Server: `auth.api.getSession({ headers })` in Server Actions
 - Client: `useSession()` from `src/lib/auth-client.ts`
-- Role check: `requireRole(session, "HR", "ADMIN")` helper
+- Role check: `await requireAuth({ roles: ["ADMIN", "HR"] })` from `src/lib/auth-middleware.ts`
 - Route protection via middleware or layout-level session check
 
 ### Validation
