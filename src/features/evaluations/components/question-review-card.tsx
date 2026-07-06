@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/card";
 import { QuestionStatusBadge } from "./evaluation-status-badge";
 import type { QuestionStatus } from "@/generated/prisma/client";
+import type { RateQuestionInput } from "@/lib/validators/evaluation";
 
 type QuestionData = {
   id: string;
@@ -62,14 +63,7 @@ type QuestionReviewCardProps = {
   onApprove: (id: string) => void;
   onReject: (id: string) => void;
   onUpdateText: (id: string, text: string) => void;
-  onRate: (
-    id: string,
-    ratings: {
-      relevanceRating: number;
-      coherenceRating: number;
-      adequacyRating: number;
-    },
-  ) => void;
+  onRate: (id: string, ratings: RateQuestionInput) => void;
 };
 
 export function QuestionReviewCard({
@@ -212,35 +206,17 @@ export function QuestionReviewCard({
           <RatingSelector
             label="Pertinencia"
             value={question.relevanceRating}
-            onChange={(v) =>
-              onRate(question.id, {
-                relevanceRating: v,
-                coherenceRating: question.coherenceRating ?? 0,
-                adequacyRating: question.adequacyRating ?? 0,
-              })
-            }
+            onChange={(v) => onRate(question.id, { relevanceRating: v })}
           />
           <RatingSelector
             label="Coherencia"
             value={question.coherenceRating}
-            onChange={(v) =>
-              onRate(question.id, {
-                relevanceRating: question.relevanceRating ?? 0,
-                coherenceRating: v,
-                adequacyRating: question.adequacyRating ?? 0,
-              })
-            }
+            onChange={(v) => onRate(question.id, { coherenceRating: v })}
           />
           <RatingSelector
             label="Adecuación"
             value={question.adequacyRating}
-            onChange={(v) =>
-              onRate(question.id, {
-                relevanceRating: question.relevanceRating ?? 0,
-                coherenceRating: question.coherenceRating ?? 0,
-                adequacyRating: v,
-              })
-            }
+            onChange={(v) => onRate(question.id, { adequacyRating: v })}
           />
         </div>
       </CardContent>

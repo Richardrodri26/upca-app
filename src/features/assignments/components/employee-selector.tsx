@@ -72,6 +72,7 @@ export function EmployeeSelector({
     const employee = users.find((u) => u.id === employeeId);
     const evaluator = users.find((u) => u.id === evaluatorId);
     if (!employee || !evaluator) return;
+    if (employee.id === evaluator.id) return;
     setPending((prev) => [...prev, { employee, evaluator }]);
     setEmployeeId("");
     setEvaluatorId("");
@@ -104,7 +105,7 @@ export function EmployeeSelector({
           />
           <UserSelect
             label="Evaluador (jefe directo)"
-            users={users}
+            users={users.filter((u) => u.id !== employeeId)}
             value={evaluatorId}
             onChange={setEvaluatorId}
           />

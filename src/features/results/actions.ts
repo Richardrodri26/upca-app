@@ -94,7 +94,7 @@ export async function getDashboardStatsForEmployee() {
 // ────────────────────────────────────────
 
 export async function getEvaluationResults(evaluationId: string) {
-  // Role check handled client-side; server just returns data or null
+  await requireAuth({ roles: ["ADMIN", "HR"] });
   const [evaluation, assignments, questions] = await Promise.all([
     prisma.evaluation.findUnique({
       where: { id: evaluationId },

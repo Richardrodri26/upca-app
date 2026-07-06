@@ -51,24 +51,15 @@ export type UpdateQuestionStatusInput = z.infer<typeof updateQuestionStatusSchem
 // Question — rate on 3 IAP dimensions
 // ────────────────────────────────────────
 
-export const rateQuestionSchema = z.object({
-  id: z.string().min(1, { error: "El ID de la pregunta es requerido" }),
-  relevanceRating: z
-    .number()
-    .int({ error: "Debe ser un número entero" })
-    .min(1, { error: "Mínimo 1" })
-    .max(5, { error: "Máximo 5" }),
-  coherenceRating: z
-    .number()
-    .int({ error: "Debe ser un número entero" })
-    .min(1, { error: "Mínimo 1" })
-    .max(5, { error: "Máximo 5" }),
-  adequacyRating: z
-    .number()
-    .int({ error: "Debe ser un número entero" })
-    .min(1, { error: "Mínimo 1" })
-    .max(5, { error: "Máximo 5" }),
-});
+export const rateQuestionSchema = z
+  .object({
+    relevanceRating: z.number().int().min(1).max(5).optional(),
+    coherenceRating: z.number().int().min(1).max(5).optional(),
+    adequacyRating: z.number().int().min(1).max(5).optional(),
+  })
+  .refine((r) => Object.keys(r).length > 0, {
+    error: "Debe calificar al menos una dimensión",
+  });
 
 export type RateQuestionInput = z.infer<typeof rateQuestionSchema>;
 

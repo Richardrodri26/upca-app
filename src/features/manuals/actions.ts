@@ -7,6 +7,7 @@ import { getCargos } from "@/lib/rag-client";
 import type { ManualStatus } from "@/generated/prisma/client";
 
 export async function getPositionsWithoutManual() {
+  await requireAuth({ roles: ["ADMIN", "HR"] });
   const positions = await prisma.position.findMany({
     where: { manual: null },
     select: { id: true, name: true },
@@ -16,6 +17,7 @@ export async function getPositionsWithoutManual() {
 }
 
 export async function getManuals(status?: ManualStatus) {
+  await requireAuth({ roles: ["ADMIN", "HR"] });
   const where = status ? { status } : {};
 
   const manuals = await prisma.manual.findMany({

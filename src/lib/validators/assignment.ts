@@ -6,9 +6,18 @@ import { z } from "zod";
 
 export const assignEvaluationSchema = z.object({
   evaluationId: z.string().min(1, { error: "El ID de la evaluación es requerido" }),
-  employeeIds: z
-    .array(z.string().min(1))
-    .min(1, { error: "Debe seleccionar al menos un empleado" }),
+  pairs: z
+    .array(
+      z
+        .object({
+          employeeId: z.string().min(1),
+          evaluatorId: z.string().min(1),
+        })
+        .refine((p) => p.employeeId !== p.evaluatorId, {
+          error: "Un empleado no puede evaluarse a sí mismo",
+        }),
+    )
+    .min(1, { error: "Debe agregar al menos un par empleado/evaluador" }),
 });
 
 export type AssignEvaluationInput = z.infer<typeof assignEvaluationSchema>;

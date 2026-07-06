@@ -4,6 +4,10 @@ import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-middleware";
 import { revalidatePath } from "next/cache";
 import { generateEvaluation as ragGenerate } from "@/lib/rag-client";
+import {
+  rateQuestionSchema,
+  type RateQuestionInput,
+} from "@/lib/validators/evaluation";
 
 const DEFAULT_ENFOQUE = "Desempeño general de funciones y responsabilidades";
 import type { EvaluationStatus, QuestionStatus } from "@/generated/prisma/client";
@@ -13,6 +17,7 @@ import type { EvaluationStatus, QuestionStatus } from "@/generated/prisma/client
 // ────────────────────────────────────────
 
 export async function getEvaluations(status?: EvaluationStatus) {
+  await requireAuth({ roles: ["ADMIN", "HR"] });
   const where = status ? { status } : {};
 
   const evaluations = await prisma.evaluation.findMany({
@@ -28,6 +33,7 @@ export async function getEvaluations(status?: EvaluationStatus) {
 }
 
 export async function getEvaluation(id: string) {
+  await requireAuth({ roles: ["ADMIN", "HR"] });
   const evaluation = await prisma.evaluation.findUnique({
     where: { id },
     include: {
@@ -44,6 +50,7 @@ export async function getEvaluation(id: string) {
 }
 
 export async function getPositionsWithProcessedManual() {
+  await requireAuth({ roles: ["ADMIN", "HR"] });
   const positions = await prisma.position.findMany({
     where: {
       manual: { status: "PROCESSED" },
@@ -169,19 +176,17 @@ export async function updateQuestionStatus(
   return { success: true };
 }
 
-export async function rateQuestion(
-  id: string,
-  ratings: {
-    relevanceRating: number;
-    coherenceRating: number;
-    adequacyRating: number;
-  },
-) {
+export async function rateQuestion(id: string, ratings: RateQuestionInput) {
   await requireAuth({ roles: ["ADMIN", "HR"] });
+
+  const parsed = rateQuestionSchema.safeParse(ratings);
+  if (!parsed.success) {
+    return { success: false, error: "Calificación inválida (1-5)" };
+  }
 
   await prisma.question.update({
     where: { id },
-    data: ratings,
+    data: parsed.data,
   });
 
   return { success: true };

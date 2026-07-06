@@ -11,6 +11,7 @@ import {
 } from "@/lib/validators/position";
 
 export async function getPositions(search?: string, department?: string) {
+  await requireAuth({ roles: ["ADMIN", "HR"] });
   const where: Record<string, unknown> = {};
 
   if (search) {
@@ -37,6 +38,7 @@ export async function getPositions(search?: string, department?: string) {
 }
 
 export async function getPosition(id: string) {
+  await requireAuth({ roles: ["ADMIN", "HR"] });
   const position = await prisma.position.findUnique({
     where: { id },
     include: {
@@ -64,6 +66,7 @@ export async function getPosition(id: string) {
 }
 
 export async function getDepartments() {
+  await requireAuth({ roles: ["ADMIN", "HR"] });
   const positions = await prisma.position.findMany({
     select: { department: true },
     distinct: ["department"],

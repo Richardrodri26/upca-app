@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { EvaluationStatus } from "@/generated/prisma/client";
+import type { RateQuestionInput } from "@/lib/validators/evaluation";
 import {
   getEvaluations,
   getEvaluation,
@@ -90,10 +91,7 @@ export function useRateQuestion() {
       ...ratings
     }: {
       id: string;
-      relevanceRating: number;
-      coherenceRating: number;
-      adequacyRating: number;
-    }) => rateQuestion(id, ratings),
+    } & RateQuestionInput) => rateQuestion(id, ratings),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["evaluations"] });
     },

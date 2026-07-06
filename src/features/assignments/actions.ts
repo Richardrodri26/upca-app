@@ -4,6 +4,10 @@ import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-middleware";
 import { revalidatePath } from "next/cache";
 import { Prisma } from "@/generated/prisma/client";
+import {
+  assignEvaluationSchema,
+  submitResponseSchema,
+} from "@/lib/validators/assignment";
 
 // ────────────────────────────────────────
 // Assign evaluation: HR selects employee + evaluator per pair
@@ -14,6 +18,16 @@ export async function assignEvaluation(
   pairs: { employeeId: string; evaluatorId: string }[],
 ) {
   await requireAuth({ roles: ["ADMIN", "HR"] });
+
+  const parsed = assignEvaluationSchema.safeParse({ evaluationId, pairs });
+  if (!parsed.success) {
+    return {
+      success: false,
+      error:
+        parsed.error.issues[0]?.message ??
+        "Datos de asignación inválidos",
+    };
+  }
 
   const evaluation = await prisma.evaluation.findUnique({
     where: { id: evaluationId },
@@ -65,6 +79,7 @@ export async function assignEvaluation(
 // ────────────────────────────────────────
 
 export async function getEvaluationAssignments(evaluationId: string) {
+  await requireAuth({ roles: ["ADMIN", "HR"] });
   const assignments = await prisma.evaluationAssignment.findMany({
     where: { evaluationId },
     include: {
@@ -106,6 +121,8 @@ export async function getMyAssignments() {
 // ────────────────────────────────────────
 
 export async function getAssignment(assignmentId: string) {
+  const session = await requireAuth();
+
   const assignment = await prisma.evaluationAssignment.findUnique({
     where: { id: assignmentId },
     include: {
@@ -121,6 +138,12 @@ export async function getAssignment(assignmentId: string) {
     },
   });
 
+  if (!assignment) return null;
+
+  const isOwner = assignment.evaluatorId === session.user.id;
+  const isManager = session.user.role === "ADMIN" || session.user.role === "HR";
+  if (!isOwner && !isManager) return null;
+
   return assignment;
 }
 
@@ -129,6 +152,7 @@ export async function getAssignment(assignmentId: string) {
 // ────────────────────────────────────────
 
 export async function getUsers() {
+  await requireAuth({ roles: ["ADMIN", "HR"] });
   const users = await prisma.user.findMany({
     select: { id: true, name: true, email: true, role: true },
     orderBy: { name: "asc" },
@@ -148,13 +172,22 @@ export async function submitResponse(
 ) {
   const session = await requireAuth();
 
+  const parsed = submitResponseSchema.safeParse({ assignmentId, questionId, value });
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: "Valor inválido: debe ser un entero entre 1 y 5",
+    };
+  }
+
   const assignment = await prisma.evaluationAssignment.findUnique({
-    where: { id: assignmentId },
+    where: { id: parsed.data.assignmentId },
     select: {
       id: true,
       evaluatorId: true,
       status: true,
       evaluationId: true,
+      evaluation: { select: { status: true } },
     },
   });
 
@@ -170,9 +203,12 @@ export async function submitResponse(
       error: "No se puede modificar una evaluación completada",
     };
   }
+  if (assignment.evaluation.status !== "ACTIVE") {
+    return { success: false, error: "La evaluación ya no está activa" };
+  }
 
   const question = await prisma.question.findUnique({
-    where: { id: questionId },
+    where: { id: parsed.data.questionId },
     select: { evaluationId: true },
   });
 
@@ -181,14 +217,23 @@ export async function submitResponse(
   }
 
   await prisma.response.upsert({
-    where: { questionId_assignmentId: { questionId, assignmentId } },
-    create: { questionId, assignmentId, value },
-    update: { value },
+    where: {
+      questionId_assignmentId: {
+        questionId: parsed.data.questionId,
+        assignmentId: parsed.data.assignmentId,
+      },
+    },
+    create: {
+      questionId: parsed.data.questionId,
+      assignmentId: parsed.data.assignmentId,
+      value: parsed.data.value,
+    },
+    update: { value: parsed.data.value },
   });
 
   if (assignment.status === "PENDING") {
     await prisma.evaluationAssignment.update({
-      where: { id: assignmentId },
+      where: { id: parsed.data.assignmentId },
       data: { status: "IN_PROGRESS" },
     });
   }
@@ -225,10 +270,16 @@ export async function completeAssignment(assignmentId: string) {
   if (assignment.status === "COMPLETED") {
     return { success: false, error: "La evaluación ya fue completada" };
   }
+  if (assignment.evaluation.status !== "ACTIVE") {
+    return { success: false, error: "La evaluación ya no está activa" };
+  }
 
   const totalQuestions = assignment.evaluation._count.questions;
   const totalResponses = assignment.responses.length;
 
+  if (totalQuestions === 0) {
+    return { success: false, error: "La evaluación no tiene preguntas" };
+  }
   if (totalResponses < totalQuestions) {
     return {
       success: false,
@@ -239,14 +290,18 @@ export async function completeAssignment(assignmentId: string) {
   const score =
     assignment.responses.reduce((sum, r) => sum + r.value, 0) / totalResponses;
 
-  await prisma.evaluationAssignment.update({
-    where: { id: assignmentId },
+  const updated = await prisma.evaluationAssignment.updateMany({
+    where: { id: assignmentId, status: { not: "COMPLETED" } },
     data: {
       status: "COMPLETED",
       score: Math.round(score * 10) / 10,
       completedAt: new Date(),
     },
   });
+
+  if (updated.count === 0) {
+    return { success: false, error: "La evaluación ya fue completada" };
+  }
 
   revalidatePath("/my-evaluations");
   return { success: true, score };
