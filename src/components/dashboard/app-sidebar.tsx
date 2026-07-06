@@ -26,6 +26,7 @@ const adminHrItems = [
   { label: "Dashboard", href: "/" },
   { label: "Cargos", href: "/positions" },
   { label: "Manuales", href: "/manuals" },
+  { label: "Base de Conocimientos", href: "/knowledge-base" },
   { label: "Evaluaciones", href: "/evaluations" },
   { label: "Mis Evaluaciones", href: "/my-evaluations" },
 ];

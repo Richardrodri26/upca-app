@@ -75,7 +75,9 @@ export function UploadDialog({
             <Label>Cargo</Label>
             <Select value={positionId} onValueChange={(v) => { if (v) setPositionId(v); }}>
               <SelectTrigger>
-                <SelectValue placeholder="Seleccione un cargo" />
+                <SelectValue placeholder="Seleccione un cargo">
+                  {positions.find((p) => p.id === positionId)?.name}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {positions.map((p) => (
