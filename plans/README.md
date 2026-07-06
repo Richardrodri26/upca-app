@@ -21,10 +21,10 @@ touched — do NOT treat repo-wide `pnpm lint` as a pass/fail signal.
 | 002 | Stop single-dimension IAP ratings from zeroing the others | P1 | S | — | DONE (tsc clean; smoke + backfill PENDING OPERATOR) |
 | 003 | Enforce status machine + validate Likert/assignment inputs | P1 | S | — | DONE (tsc clean; smoke PENDING OPERATOR) |
 | 004 | Harden the RAG boundary (timeouts, logging, config, uploads) | P1 | S | — | DONE (tsc clean; smoke + Vercel env check PENDING OPERATOR) |
-| 005 | Verification baseline (typecheck, lint, Vitest, CI) | P1 | M | — | TODO |
-| 006 | Fix actively-wrong docs (RAG contract, AGENTS.md, README) | P2 | S | — | TODO |
-| 007 | Performance + dead-code quick wins | P2 | S–M | 003 | TODO |
-| 008 | Consolidate the triplicated Position+Manual sync | P2 | M | 005 | TODO |
+| 005 | Verification baseline (typecheck, lint, Vitest, CI) | P1 | M | — | DONE (lint+typecheck+test green; 24 tests; .env.example gitignored Pendiente operador) |
+| 006 | Fix actively-wrong docs (RAG contract, AGENTS.md, README) | P2 | S | — | DONE |
+| 007 | Performance + dead-code quick wins | P2 | S–M | 003 | DONE (gates green; smoke PENDING OPERATOR) |
+| 008 | Consolidate the triplicated Position+Manual sync | P2 | M | 005 | DONE (0 duplicates on dev; smoke + UI-warning surfacing PENDING OPERATOR) |
 | 009 | Make "Exportar Resultados" actually export (CSV) | P2 | S | 001 | TODO |
 | 010 | Employee-facing "Mis Resultados" view | P3 | M | 001 | TODO |
 | 011 | Admin user management + close open sign-up (spike+build) | P3 | M | 001 | TODO |
