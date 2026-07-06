@@ -3,7 +3,10 @@ import type { AssignmentStatus } from "@/generated/prisma/client";
 
 const config: Record<
   AssignmentStatus,
-  { variant: "default" | "secondary" | "destructive" | "outline"; label: string }
+  {
+    variant: "default" | "secondary" | "destructive" | "outline";
+    label: string;
+  }
 > = {
   PENDING: { variant: "outline", label: "Pendiente" },
   IN_PROGRESS: { variant: "secondary", label: "En Progreso" },

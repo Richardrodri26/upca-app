@@ -1,13 +1,13 @@
 "use server";
 
-import { prisma } from "@/lib/prisma";
-import { requireAuth } from "@/lib/auth-middleware";
 import { revalidatePath } from "next/cache";
+import { requireAuth } from "@/lib/auth-middleware";
+import { prisma } from "@/lib/prisma";
 import {
-  createPositionSchema,
-  updatePositionSchema,
   type CreatePositionInput,
+  createPositionSchema,
   type UpdatePositionInput,
+  updatePositionSchema,
 } from "@/lib/validators/position";
 
 export async function getPositions(search?: string, department?: string) {
@@ -129,7 +129,8 @@ export async function deletePosition(id: string) {
   } catch {
     return {
       success: false,
-      error: "No se pudo eliminar el cargo. Puede tener manuales o evaluaciones asociadas.",
+      error:
+        "No se pudo eliminar el cargo. Puede tener manuales o evaluaciones asociadas.",
     };
   }
 }

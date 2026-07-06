@@ -1,11 +1,15 @@
 "use client";
 
-import { use, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { useAssignment, useSubmitResponse, useCompleteAssignment } from "@/features/assignments/queries";
-import { LikertQuestion } from "@/features/assignments/components/likert-question";
+import { use, useCallback, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { LikertQuestion } from "@/features/assignments/components/likert-question";
+import {
+  useAssignment,
+  useCompleteAssignment,
+  useSubmitResponse,
+} from "@/features/assignments/queries";
 
 export default function ResponsePage({
   params,
@@ -57,7 +61,8 @@ export default function ResponsePage({
   const totalQuestions = questions.length;
   const answeredCount = responseMap.size;
   const isComplete = assignment.status === "COMPLETED";
-  const progress = totalQuestions > 0 ? (answeredCount / totalQuestions) * 100 : 0;
+  const progress =
+    totalQuestions > 0 ? (answeredCount / totalQuestions) * 100 : 0;
   const allAnswered = answeredCount === totalQuestions;
 
   return (
@@ -125,15 +130,15 @@ export default function ResponsePage({
       {/* Sticky bottom bar */}
       {!isComplete && (
         <div className="fixed bottom-0 left-0 right-0 bg-background border-t p-4 flex justify-end gap-3 z-10">
-          <Button variant="outline" onClick={() => router.push("/my-evaluations")}>
+          <Button
+            variant="outline"
+            onClick={() => router.push("/my-evaluations")}
+          >
             Guardar y Salir
           </Button>
           {showConfirm ? (
             <div className="flex gap-2">
-              <Button
-                variant="ghost"
-                onClick={() => setShowConfirm(false)}
-              >
+              <Button variant="ghost" onClick={() => setShowConfirm(false)}>
                 Cancelar
               </Button>
               <Button
@@ -148,7 +153,11 @@ export default function ResponsePage({
             <Button
               onClick={() => setShowConfirm(true)}
               disabled={!allAnswered}
-              title={!allAnswered ? "Responda todas las preguntas para finalizar" : undefined}
+              title={
+                !allAnswered
+                  ? "Responda todas las preguntas para finalizar"
+                  : undefined
+              }
             >
               Finalizar Evaluación
             </Button>

@@ -1,14 +1,16 @@
 "use client";
 
-import { useState, useMemo } from "react";
 import {
-  useReactTable,
+  createColumnHelper,
+  flexRender,
   getCoreRowModel,
   getSortedRowModel,
-  flexRender,
-  createColumnHelper,
   type SortingState,
+  useReactTable,
 } from "@tanstack/react-table";
+import { useMemo, useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -17,8 +19,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import type { ManualStatus } from "@/generated/prisma/client";
 
 // ────────────────────────────────────────
@@ -40,7 +40,10 @@ export type PositionRow = {
 const statusBadge = (status: ManualStatus) => {
   const map: Record<
     ManualStatus,
-    { variant: "default" | "secondary" | "destructive" | "outline"; label: string }
+    {
+      variant: "default" | "secondary" | "destructive" | "outline";
+      label: string;
+    }
   > = {
     PENDING: { variant: "outline", label: "Pendiente" },
     PROCESSING: { variant: "secondary", label: "Procesando" },
@@ -78,9 +81,7 @@ const columns = (
   columnHelper.accessor("department", {
     header: "Departamento",
     cell: (info) => (
-      <span className="text-muted-foreground">
-        {info.getValue() ?? "—"}
-      </span>
+      <span className="text-muted-foreground">{info.getValue() ?? "—"}</span>
     ),
   }),
   columnHelper.accessor("manual", {
@@ -94,9 +95,7 @@ const columns = (
   columnHelper.accessor("evaluations", {
     header: "Evaluaciones",
     cell: (info) => (
-      <span className="text-muted-foreground">
-        {info.getValue().length}
-      </span>
+      <span className="text-muted-foreground">{info.getValue().length}</span>
     ),
   }),
   columnHelper.display({

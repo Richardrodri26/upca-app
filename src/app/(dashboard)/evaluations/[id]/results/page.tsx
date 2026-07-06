@@ -1,19 +1,10 @@
 "use client";
 
-import { use } from "react";
 import Link from "next/link";
-import { useSession } from "@/features/auth/hooks/use-session";
-import { useEvaluationResults } from "@/features/results/queries";
-import { metricColor } from "@/features/results/utils/iap";
-import { AssignmentStatusBadge } from "@/features/assignments/components/assignment-status-badge";
+import { use } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -22,6 +13,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { AssignmentStatusBadge } from "@/features/assignments/components/assignment-status-badge";
+import { useSession } from "@/features/auth/hooks/use-session";
+import { useEvaluationResults } from "@/features/results/queries";
+import { metricColor } from "@/features/results/utils/iap";
 
 export default function EvaluationResultsPage({
   params,
@@ -78,7 +73,11 @@ export default function EvaluationResultsPage({
             {results.evaluation.positionName}
           </p>
         </div>
-        <Button variant="outline" onClick={() => {}} title="Exportar Resultados">
+        <Button
+          variant="outline"
+          onClick={() => {}}
+          title="Exportar Resultados"
+        >
           Exportar Resultados
         </Button>
       </div>
@@ -108,9 +107,7 @@ export default function EvaluationResultsPage({
           </CardHeader>
           <CardContent>
             <div className="flex items-baseline gap-2">
-              <p className="text-3xl font-bold tabular-nums">
-                {results.iap}%
-              </p>
+              <p className="text-3xl font-bold tabular-nums">{results.iap}%</p>
               <Badge variant={iapColor}>
                 {results.iapRatedCount} de {results.questions.length}
               </Badge>

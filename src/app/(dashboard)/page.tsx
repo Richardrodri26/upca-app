@@ -1,22 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useSession } from "@/features/auth/hooks/use-session";
-import {
-  useDashboardStats,
-  useEmployeeDashboardStats,
-} from "@/features/results/queries";
-import { useEvaluations } from "@/features/evaluations/queries";
-import { useMyAssignments } from "@/features/assignments/queries";
-import { EvaluationStatusBadge } from "@/features/evaluations/components/evaluation-status-badge";
-import { metricColor } from "@/features/results/utils/iap";
 import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -25,6 +11,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useMyAssignments } from "@/features/assignments/queries";
+import { useSession } from "@/features/auth/hooks/use-session";
+import { EvaluationStatusBadge } from "@/features/evaluations/components/evaluation-status-badge";
+import { useEvaluations } from "@/features/evaluations/queries";
+import {
+  useDashboardStats,
+  useEmployeeDashboardStats,
+} from "@/features/results/queries";
+import { metricColor } from "@/features/results/utils/iap";
 
 export default function DashboardPage() {
   const { data: session } = useSession();
@@ -62,7 +57,7 @@ function HRDashboard() {
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold tabular-nums">
-              {isLoading ? "—" : stats?.activeEvaluations ?? 0}
+              {isLoading ? "—" : (stats?.activeEvaluations ?? 0)}
             </p>
           </CardContent>
         </Card>
@@ -74,7 +69,7 @@ function HRDashboard() {
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold tabular-nums">
-              {isLoading ? "—" : stats?.processedManuals ?? 0}
+              {isLoading ? "—" : (stats?.processedManuals ?? 0)}
             </p>
           </CardContent>
         </Card>
@@ -86,7 +81,7 @@ function HRDashboard() {
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold tabular-nums">
-              {isLoading ? "—" : stats?.evaluatedEmployees ?? 0}
+              {isLoading ? "—" : (stats?.evaluatedEmployees ?? 0)}
             </p>
           </CardContent>
         </Card>
@@ -185,7 +180,7 @@ function EmployeeDashboard() {
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold tabular-nums">
-              {isLoading ? "—" : stats?.pendingCount ?? 0}
+              {isLoading ? "—" : (stats?.pendingCount ?? 0)}
             </p>
           </CardContent>
         </Card>
@@ -197,7 +192,7 @@ function EmployeeDashboard() {
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold tabular-nums">
-              {isLoading ? "—" : stats?.completedCount ?? 0}
+              {isLoading ? "—" : (stats?.completedCount ?? 0)}
             </p>
           </CardContent>
         </Card>
@@ -209,7 +204,7 @@ function EmployeeDashboard() {
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold tabular-nums">
-              {isLoading ? "—" : stats?.averageScore.toFixed(1) ?? "—"}
+              {isLoading ? "—" : (stats?.averageScore.toFixed(1) ?? "—")}
             </p>
           </CardContent>
         </Card>
@@ -249,7 +244,15 @@ function EmployeeDashboard() {
                       </p>
                     </div>
                     <div className="flex items-center gap-3">
-                      <Badge variant={a.status === "COMPLETED" ? "default" : a.status === "IN_PROGRESS" ? "secondary" : "outline"}>
+                      <Badge
+                        variant={
+                          a.status === "COMPLETED"
+                            ? "default"
+                            : a.status === "IN_PROGRESS"
+                              ? "secondary"
+                              : "outline"
+                        }
+                      >
                         {statusLabel}
                       </Badge>
                       {a.score != null && (

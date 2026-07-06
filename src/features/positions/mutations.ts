@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createPosition, updatePosition, deletePosition } from "./actions";
+import { createPosition, deletePosition, updatePosition } from "./actions";
 
 export function useCreatePosition() {
   const queryClient = useQueryClient();

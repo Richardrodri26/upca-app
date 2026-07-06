@@ -1,19 +1,16 @@
 "use client";
 
-import { use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useSession } from "@/features/auth/hooks/use-session";
-import { useEvaluation, useCloseEvaluation } from "@/features/evaluations/queries";
-import { EvaluationStatusBadge } from "@/features/evaluations/components/evaluation-status-badge";
+import { use } from "react";
 import { Button } from "@/components/ui/button";
-
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useSession } from "@/features/auth/hooks/use-session";
+import { EvaluationStatusBadge } from "@/features/evaluations/components/evaluation-status-badge";
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  useCloseEvaluation,
+  useEvaluation,
+} from "@/features/evaluations/queries";
 
 export default function EvaluationDetailPage({
   params,

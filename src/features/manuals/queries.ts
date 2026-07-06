@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { getManuals, getPositionsWithoutManual } from "./actions";
 import type { ManualStatus } from "@/generated/prisma/client";
+import { getManuals, getPositionsWithoutManual } from "./actions";
 
 export function usePositionsWithoutManual() {
   return useQuery({

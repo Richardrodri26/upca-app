@@ -1,7 +1,7 @@
 import { getManuals } from "@/features/manuals/actions";
 import { ManualsPageClient } from "@/features/manuals/components/manuals-page-client";
-import { manualsCache } from "@/lib/search-params";
 import type { ManualStatus } from "@/generated/prisma/client";
+import { manualsCache } from "@/lib/search-params";
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 

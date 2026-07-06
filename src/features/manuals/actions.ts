@@ -1,10 +1,10 @@
 "use server";
 
-import { prisma } from "@/lib/prisma";
-import { requireAuth } from "@/lib/auth-middleware";
 import { revalidatePath } from "next/cache";
-import { getCargos } from "@/lib/rag-client";
 import type { ManualStatus } from "@/generated/prisma/client";
+import { requireAuth } from "@/lib/auth-middleware";
+import { prisma } from "@/lib/prisma";
+import { getCargos } from "@/lib/rag-client";
 
 export async function getPositionsWithoutManual() {
   await requireAuth({ roles: ["ADMIN", "HR"] });
@@ -64,7 +64,10 @@ export async function registerManual(positionId: string) {
   const result = await getCargos();
 
   if (!result.success) {
-    await prisma.manual.update({ where: { id: manualId }, data: { status: "ERROR" } });
+    await prisma.manual.update({
+      where: { id: manualId },
+      data: { status: "ERROR" },
+    });
     revalidatePath("/manuals");
     return { success: false, error: result.error };
   }
@@ -74,7 +77,10 @@ export async function registerManual(positionId: string) {
   );
 
   if (!exists) {
-    await prisma.manual.update({ where: { id: manualId }, data: { status: "ERROR" } });
+    await prisma.manual.update({
+      where: { id: manualId },
+      data: { status: "ERROR" },
+    });
     revalidatePath("/manuals");
     return {
       success: false,
@@ -96,7 +102,8 @@ export async function syncManualsWithRag() {
   await requireAuth({ roles: ["ADMIN", "HR"] });
   const { syncWithRag } = await import("@/lib/rag-sync");
   const result = await syncWithRag();
-  if (!result) return { success: false, error: "No se pudo conectar con el servicio RAG" };
+  if (!result)
+    return { success: false, error: "No se pudo conectar con el servicio RAG" };
   revalidatePath("/manuals");
   revalidatePath("/positions");
   return { success: true, data: result };
@@ -116,7 +123,8 @@ export async function deleteManual(id: string) {
     if (evaluations > 0) {
       return {
         success: false,
-        error: "No se puede eliminar un manual con evaluaciones activas o en revisión",
+        error:
+          "No se puede eliminar un manual con evaluaciones activas o en revisión",
       };
     }
 

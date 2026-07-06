@@ -1,5 +1,5 @@
-import { getCargos } from "@/lib/rag-client";
 import { prisma } from "@/lib/prisma";
+import { getCargos } from "@/lib/rag-client";
 
 export type SyncResult = { synced: number; created: number };
 
@@ -21,7 +21,9 @@ export async function syncWithRag(): Promise<SyncResult | null> {
   });
 
   if (!systemUser) {
-    console.warn("[RAG Sync] No hay usuario ADMIN/HR para asignar los manuales");
+    console.warn(
+      "[RAG Sync] No hay usuario ADMIN/HR para asignar los manuales",
+    );
     return null;
   }
 

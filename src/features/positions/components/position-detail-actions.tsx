@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useSession } from "@/features/auth/hooks/use-session";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useSession } from "@/features/auth/hooks/use-session";
+import { useDeletePosition, useUpdatePosition } from "../mutations";
 import { PositionForm } from "./position-form";
-import { useUpdatePosition, useDeletePosition } from "../mutations";
 
 type PositionDetailActionsProps = {
   position: {
@@ -16,7 +16,9 @@ type PositionDetailActionsProps = {
   };
 };
 
-export function PositionDetailActions({ position }: PositionDetailActionsProps) {
+export function PositionDetailActions({
+  position,
+}: PositionDetailActionsProps) {
   const router = useRouter();
   const { data: session } = useSession();
   const [formOpen, setFormOpen] = useState(false);
@@ -24,7 +26,8 @@ export function PositionDetailActions({ position }: PositionDetailActionsProps) 
   const updateMutation = useUpdatePosition();
   const deleteMutation = useDeletePosition();
 
-  const canModify = session?.user?.role === "ADMIN" || session?.user?.role === "HR";
+  const canModify =
+    session?.user?.role === "ADMIN" || session?.user?.role === "HR";
 
   if (!canModify) return null;
 

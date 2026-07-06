@@ -1,12 +1,8 @@
 "use client";
 
 import { useForm } from "@tanstack/react-form";
-import { createPositionSchema, type CreatePositionInput, type UpdatePositionInput } from "@/lib/validators/position";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { FieldError } from "@/components/atoms/field-error";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -14,6 +10,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  type CreatePositionInput,
+  createPositionSchema,
+  type UpdatePositionInput,
+} from "@/lib/validators/position";
 
 type PositionData = {
   id: string;
@@ -49,9 +53,10 @@ export function PositionForm({
       onChange: createPositionSchema,
     },
     onSubmit: async ({ value }) => {
-      const result = isEditing
-        ? await onSubmit({ id: position!.id, ...value } as UpdatePositionInput)
-        : await onSubmit(value as CreatePositionInput);
+      const result =
+        isEditing && position
+          ? await onSubmit({ id: position.id, ...value } as UpdatePositionInput)
+          : await onSubmit(value as CreatePositionInput);
       if (result.success) {
         onOpenChange(false);
         form.reset();

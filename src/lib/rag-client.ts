@@ -48,13 +48,13 @@ type GenerateResult = {
 
 function buildHeaders(): Record<string, string> {
   const h: Record<string, string> = { "Content-Type": "application/json" };
-  if (HF_TOKEN) h["Authorization"] = `Bearer ${HF_TOKEN}`;
+  if (HF_TOKEN) h.Authorization = `Bearer ${HF_TOKEN}`;
   return h;
 }
 
 function buildMultipartHeaders(): Record<string, string> {
   const h: Record<string, string> = {};
-  if (HF_TOKEN) h["Authorization"] = `Bearer ${HF_TOKEN}`;
+  if (HF_TOKEN) h.Authorization = `Bearer ${HF_TOKEN}`;
   return h;
 }
 

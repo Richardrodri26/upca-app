@@ -2,6 +2,13 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -10,13 +17,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 
 type PositionOption = {
   id: string;
@@ -27,7 +27,9 @@ type RegisterManualDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   positions: PositionOption[];
-  onRegister: (positionId: string) => Promise<{ success: boolean; error?: string }>;
+  onRegister: (
+    positionId: string,
+  ) => Promise<{ success: boolean; error?: string }>;
 };
 
 export function UploadDialog({
@@ -73,7 +75,12 @@ export function UploadDialog({
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
             <Label>Cargo</Label>
-            <Select value={positionId} onValueChange={(v) => { if (v) setPositionId(v); }}>
+            <Select
+              value={positionId}
+              onValueChange={(v) => {
+                if (v) setPositionId(v);
+              }}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Seleccione un cargo">
                   {positions.find((p) => p.id === positionId)?.name}
@@ -94,14 +101,9 @@ export function UploadDialog({
             )}
           </div>
 
-          {error && (
-            <p className="text-sm text-destructive">{error}</p>
-          )}
+          {error && <p className="text-sm text-destructive">{error}</p>}
 
-          <Button
-            onClick={handleSubmit}
-            disabled={loading || !positionId}
-          >
+          <Button onClick={handleSubmit} disabled={loading || !positionId}>
             {loading ? "Verificando en RAG..." : "Registrar en RAG"}
           </Button>
         </div>

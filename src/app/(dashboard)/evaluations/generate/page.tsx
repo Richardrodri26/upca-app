@@ -1,21 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { useSession } from "@/features/auth/hooks/use-session";
 import { useQuery } from "@tanstack/react-query";
-import { useGenerateEvaluation } from "@/features/evaluations/queries";
-import { getPositionsWithProcessedManual } from "@/features/evaluations/actions";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Card,
   CardContent,
@@ -23,6 +11,18 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { useSession } from "@/features/auth/hooks/use-session";
+import { getPositionsWithProcessedManual } from "@/features/evaluations/actions";
+import { useGenerateEvaluation } from "@/features/evaluations/queries";
 
 const DEFAULT_ENFOQUE = "Desempeño general de funciones y responsabilidades";
 
@@ -79,13 +79,19 @@ export default function GenerateEvaluationPage() {
         <CardHeader>
           <CardTitle>Configuración</CardTitle>
           <CardDescription>
-            El agente generará preguntas en escala Likert basadas en el manual del cargo
+            El agente generará preguntas en escala Likert basadas en el manual
+            del cargo
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-6">
           <div className="flex flex-col gap-1.5">
             <Label>Cargo</Label>
-            <Select value={positionId} onValueChange={(v) => { if (v) setPositionId(v); }}>
+            <Select
+              value={positionId}
+              onValueChange={(v) => {
+                if (v) setPositionId(v);
+              }}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Seleccione un cargo">
                   {positions.find((p) => p.id === positionId)?.name}
@@ -101,7 +107,8 @@ export default function GenerateEvaluationPage() {
             </Select>
             {positions.length === 0 && (
               <p className="text-sm text-muted-foreground">
-                No hay cargos registrados en el sistema RAG. Registrá un manual primero.
+                No hay cargos registrados en el sistema RAG. Registrá un manual
+                primero.
               </p>
             )}
           </div>
@@ -115,13 +122,12 @@ export default function GenerateEvaluationPage() {
               rows={3}
             />
             <p className="text-xs text-muted-foreground">
-              Opcional. Define el pilar o área que el agente priorizará al generar las preguntas.
+              Opcional. Define el pilar o área que el agente priorizará al
+              generar las preguntas.
             </p>
           </div>
 
-          {error && (
-            <p className="text-sm text-destructive">{error}</p>
-          )}
+          {error && <p className="text-sm text-destructive">{error}</p>}
 
           <Button
             onClick={handleGenerate}

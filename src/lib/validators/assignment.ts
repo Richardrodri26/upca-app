@@ -5,7 +5,9 @@ import { z } from "zod";
 // ────────────────────────────────────────
 
 export const assignEvaluationSchema = z.object({
-  evaluationId: z.string().min(1, { error: "El ID de la evaluación es requerido" }),
+  evaluationId: z
+    .string()
+    .min(1, { error: "El ID de la evaluación es requerido" }),
   pairs: z
     .array(
       z
@@ -27,7 +29,9 @@ export type AssignEvaluationInput = z.infer<typeof assignEvaluationSchema>;
 // ────────────────────────────────────────
 
 export const submitResponseSchema = z.object({
-  assignmentId: z.string().min(1, { error: "El ID de la asignación es requerido" }),
+  assignmentId: z
+    .string()
+    .min(1, { error: "El ID de la asignación es requerido" }),
   questionId: z.string().min(1, { error: "El ID de la pregunta es requerido" }),
   value: z
     .number()
@@ -43,7 +47,9 @@ export type SubmitResponseInput = z.infer<typeof submitResponseSchema>;
 // ────────────────────────────────────────
 
 export const completeAssignmentSchema = z.object({
-  assignmentId: z.string().min(1, { error: "El ID de la asignación es requerido" }),
+  assignmentId: z
+    .string()
+    .min(1, { error: "El ID de la asignación es requerido" }),
 });
 
 export type CompleteAssignmentInput = z.infer<typeof completeAssignmentSchema>;

@@ -86,7 +86,9 @@ export function calculateIRTO(
 /**
  * Color coding helper shared across components.
  */
-export function metricColor(value: number): "default" | "destructive" | "secondary" {
+export function metricColor(
+  value: number,
+): "default" | "destructive" | "secondary" {
   if (value >= 80) return "default";
   if (value >= 60) return "secondary";
   return "destructive";

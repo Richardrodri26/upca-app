@@ -44,7 +44,9 @@ export function LikertQuestion({
                   : "border-muted-foreground/20 text-muted-foreground"
               }`}
             >
-              <span className={`text-lg font-bold ${selected ? "text-primary" : ""}`}>
+              <span
+                className={`text-lg font-bold ${selected ? "text-primary" : ""}`}
+              >
                 {optionValue}
               </span>
               <span className="text-[10px] leading-tight text-center">

@@ -1,9 +1,7 @@
 "use client";
 
-import { useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useSession } from "@/features/auth/hooks/use-session";
-import { useTableState } from "@/hooks/use-table-state";
+import { useCallback, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -12,11 +10,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ManualsTable, type ManualRow } from "./manuals-table";
-import { UploadDialog } from "./upload-dialog";
-import { getManuals, getPositionsWithoutManual } from "../actions";
-import { useRegisterManual, useDeleteManual, useSyncWithRag } from "../mutations";
+import { useSession } from "@/features/auth/hooks/use-session";
 import type { ManualStatus } from "@/generated/prisma/client";
+import { useTableState } from "@/hooks/use-table-state";
+import { getManuals, getPositionsWithoutManual } from "../actions";
+import {
+  useDeleteManual,
+  useRegisterManual,
+  useSyncWithRag,
+} from "../mutations";
+import { type ManualRow, ManualsTable } from "./manuals-table";
+import { UploadDialog } from "./upload-dialog";
 
 type ManualsPageClientProps = {
   initialManuals: ManualRow[];
@@ -28,8 +32,7 @@ export function ManualsPageClient({ initialManuals }: ManualsPageClientProps) {
 
   const { status, setStatus } = useTableState({ statusKey: "status" });
 
-  const statusFilter =
-    status === "all" ? undefined : (status as ManualStatus);
+  const statusFilter = status === "all" ? undefined : (status as ManualStatus);
 
   const { data: manuals = initialManuals } = useQuery({
     queryKey: ["manuals", { status: statusFilter }],
@@ -71,9 +74,13 @@ export function ManualsPageClient({ initialManuals }: ManualsPageClientProps) {
               onClick={() => syncMutation.mutate()}
               disabled={syncMutation.isPending}
             >
-              {syncMutation.isPending ? "Sincronizando..." : "Sincronizar con RAG"}
+              {syncMutation.isPending
+                ? "Sincronizando..."
+                : "Sincronizar con RAG"}
             </Button>
-            <Button onClick={() => setDialogOpen(true)}>Registrar Manual</Button>
+            <Button onClick={() => setDialogOpen(true)}>
+              Registrar Manual
+            </Button>
           </div>
         )}
       </div>

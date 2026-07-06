@@ -1,7 +1,7 @@
-import { getPositions, getDepartments } from "@/features/positions/actions";
+import { getDepartments, getPositions } from "@/features/positions/actions";
 import { PositionsPageClient } from "@/features/positions/components/positions-page-client";
-import { positionsCache } from "@/lib/search-params";
 import type { ManualStatus } from "@/generated/prisma/client";
+import { positionsCache } from "@/lib/search-params";
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 

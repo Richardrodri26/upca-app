@@ -2,15 +2,15 @@
 
 import { use } from "react";
 import { useSession } from "@/features/auth/hooks/use-session";
-import { useEvaluation } from "@/features/evaluations/queries";
+import { QuestionReviewCard } from "@/features/evaluations/components/question-review-card";
+import { ReviewSummaryBar } from "@/features/evaluations/components/review-summary-bar";
 import {
+  useActivateEvaluation,
+  useEvaluation,
+  useRateQuestion,
   useUpdateQuestionStatus,
   useUpdateQuestionText,
-  useRateQuestion,
-  useActivateEvaluation,
 } from "@/features/evaluations/queries";
-import { ReviewSummaryBar } from "@/features/evaluations/components/review-summary-bar";
-import { QuestionReviewCard } from "@/features/evaluations/components/question-review-card";
 import type { EvaluationStatus } from "@/generated/prisma/client";
 
 export default function ReviewPage({
@@ -28,10 +28,7 @@ export default function ReviewPage({
   const activateEval = useActivateEvaluation();
 
   // Role guard
-  if (
-    session?.user?.role !== "ADMIN" &&
-    session?.user?.role !== "HR"
-  ) {
+  if (session?.user?.role !== "ADMIN" && session?.user?.role !== "HR") {
     return (
       <div className="text-muted-foreground py-16 text-center">
         No tiene permisos para revisar evaluaciones
@@ -60,9 +57,7 @@ export default function ReviewPage({
     (q) => q.status === "APPROVED" || q.status === "EDITED",
   ).length;
   const pendingCount = questions.filter((q) => q.status === "PENDING").length;
-  const rejectedCount = questions.filter(
-    (q) => q.status === "REJECTED",
-  ).length;
+  const rejectedCount = questions.filter((q) => q.status === "REJECTED").length;
 
   const canActivate = pendingCount === 0 && rejectedCount === 0;
 
@@ -116,7 +111,9 @@ export default function ReviewPage({
               updateStatus.mutate({ id: qId, status: "REJECTED" })
             }
             onUpdateText={(qId, text) => updateText.mutate({ id: qId, text })}
-            onRate={(qId, ratings) => rateQuestion.mutate({ id: qId, ...ratings })}
+            onRate={(qId, ratings) =>
+              rateQuestion.mutate({ id: qId, ...ratings })
+            }
           />
         ))}
       </div>

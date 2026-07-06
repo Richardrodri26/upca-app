@@ -1,14 +1,15 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
 import {
-  useReactTable,
+  createColumnHelper,
+  flexRender,
   getCoreRowModel,
   getSortedRowModel,
-  flexRender,
-  createColumnHelper,
   type SortingState,
+  useReactTable,
 } from "@tanstack/react-table";
+import { useCallback, useMemo, useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -17,15 +18,20 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { ManualStatusBadge } from "./manual-status-badge";
 import type { ManualStatus } from "@/generated/prisma/client";
+import { ManualStatusBadge } from "./manual-status-badge";
 
 // ────────────────────────────────────────
 // Delete button with inline confirmation
 // ────────────────────────────────────────
 
-function DeleteButton({ id, onDelete }: { id: string; onDelete: (id: string) => void }) {
+function DeleteButton({
+  id,
+  onDelete,
+}: {
+  id: string;
+  onDelete: (id: string) => void;
+}) {
   const [confirming, setConfirming] = useState(false);
 
   const handleClick = useCallback(() => {
@@ -68,16 +74,11 @@ export type ManualRow = {
 
 const columnHelper = createColumnHelper<ManualRow>();
 
-function makeColumns(
-  canModify: boolean,
-  onDelete: (id: string) => void,
-) {
+function makeColumns(canModify: boolean, onDelete: (id: string) => void) {
   return [
     columnHelper.accessor("fileName", {
       header: "Manual",
-      cell: (info) => (
-        <span className="font-medium">{info.getValue()}</span>
-      ),
+      cell: (info) => <span className="font-medium">{info.getValue()}</span>,
     }),
     columnHelper.accessor("position.name", {
       header: "Cargo",
@@ -101,9 +102,7 @@ function makeColumns(
       cell: (info) => {
         if (!canModify) return null;
         const manual = info.row.original;
-        return (
-          <DeleteButton id={manual.id} onDelete={onDelete} />
-        );
+        return <DeleteButton id={manual.id} onDelete={onDelete} />;
       },
     }),
   ];
@@ -119,11 +118,7 @@ type ManualsTableProps = {
   onDelete: (id: string) => void;
 };
 
-export function ManualsTable({
-  data,
-  canModify,
-  onDelete,
-}: ManualsTableProps) {
+export function ManualsTable({ data, canModify, onDelete }: ManualsTableProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
 
   const columns = useMemo(

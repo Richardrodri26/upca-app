@@ -2,9 +2,6 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { useSession } from "@/features/auth/hooks/use-session";
-import { useEvaluations } from "@/features/evaluations/queries";
-import { EvaluationStatusBadge } from "@/features/evaluations/components/evaluation-status-badge";
 import {
   Select,
   SelectContent,
@@ -20,6 +17,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useSession } from "@/features/auth/hooks/use-session";
+import { EvaluationStatusBadge } from "@/features/evaluations/components/evaluation-status-badge";
+import { useEvaluations } from "@/features/evaluations/queries";
 import type { EvaluationStatus } from "@/generated/prisma/client";
 
 const STATUS_OPTIONS = [
@@ -38,10 +38,7 @@ export default function EvaluationsPage() {
   const { data: evaluations = [], isLoading } = useEvaluations(statusFilter);
 
   // Role guard
-  if (
-    session?.user?.role !== "ADMIN" &&
-    session?.user?.role !== "HR"
-  ) {
+  if (session?.user?.role !== "ADMIN" && session?.user?.role !== "HR") {
     return (
       <div className="text-muted-foreground py-16 text-center">
         No tiene permisos para ver evaluaciones

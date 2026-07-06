@@ -1,13 +1,13 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { AppSidebar } from "@/components/dashboard/app-sidebar";
+import { Separator } from "@/components/ui/separator";
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { Separator } from "@/components/ui/separator";
-import { AppSidebar } from "@/components/dashboard/app-sidebar";
 
 type DashboardClientLayoutProps = {
   user: {

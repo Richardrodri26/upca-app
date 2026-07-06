@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getPositions, getPosition, getDepartments } from "./actions";
+import { getDepartments, getPosition, getPositions } from "./actions";
 
 export function usePositions(search?: string, department?: string) {
   return useQuery({

@@ -1,5 +1,6 @@
 "use client";
 
+import { SignOutButton } from "@/components/dashboard/sign-out-button";
 import {
   Sidebar,
   SidebarContent,
@@ -12,7 +13,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { SignOutButton } from "@/components/dashboard/sign-out-button";
 
 type AppSidebarProps = {
   user: {

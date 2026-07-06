@@ -1,13 +1,8 @@
-import { getPosition } from "@/features/positions/actions";
 import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getPosition } from "@/features/positions/actions";
 import { PositionDetailActions } from "@/features/positions/components/position-detail-actions";
-import type { ManualStatus, EvaluationStatus } from "@/generated/prisma/client";
+import type { EvaluationStatus, ManualStatus } from "@/generated/prisma/client";
 
 type Params = Promise<{ id: string }>;
 
@@ -24,7 +19,10 @@ const manualStatusLabel = (status: ManualStatus) => {
 const evaluationStatusBadge = (status: EvaluationStatus) => {
   const map: Record<
     EvaluationStatus,
-    { variant: "default" | "secondary" | "destructive" | "outline"; label: string }
+    {
+      variant: "default" | "secondary" | "destructive" | "outline";
+      label: string;
+    }
   > = {
     DRAFT: { variant: "outline", label: "Borrador" },
     GENERATING: { variant: "secondary", label: "Generando" },
@@ -56,9 +54,7 @@ export default async function PositionDetailPage({
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            {position.name}
-          </h1>
+          <h1 className="text-2xl font-bold tracking-tight">{position.name}</h1>
           {position.department && (
             <p className="text-muted-foreground">{position.department}</p>
           )}
@@ -98,9 +94,7 @@ export default async function PositionDetailPage({
               </Badge>
             </div>
           ) : (
-            <p className="text-muted-foreground text-sm">
-              Sin manual asociado
-            </p>
+            <p className="text-muted-foreground text-sm">Sin manual asociado</p>
           )}
         </CardContent>
       </Card>

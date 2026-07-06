@@ -1,10 +1,8 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { useSession } from "@/features/auth/hooks/use-session";
-import { useTableState } from "@/hooks/use-table-state";
+import { useRouter } from "next/navigation";
+import { useCallback, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -14,14 +12,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PositionsTable, type PositionRow } from "./positions-table";
-import { PositionForm } from "./position-form";
+import { useSession } from "@/features/auth/hooks/use-session";
+import { useTableState } from "@/hooks/use-table-state";
 import { getPositions } from "../actions";
 import {
   useCreatePosition,
-  useUpdatePosition,
   useDeletePosition,
+  useUpdatePosition,
 } from "../mutations";
+import { PositionForm } from "./position-form";
+import { type PositionRow, PositionsTable } from "./positions-table";
 
 type PositionsPageClientProps = {
   /** Initial data fetched by the server component */
@@ -37,7 +37,9 @@ export function PositionsPageClient({
   const router = useRouter();
   const { data: session } = useSession();
   const [formOpen, setFormOpen] = useState(false);
-  const [editingPosition, setEditingPosition] = useState<PositionRow | null>(null);
+  const [editingPosition, setEditingPosition] = useState<PositionRow | null>(
+    null,
+  );
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
   // ── Table state via nuqs (URL-persisted) ──

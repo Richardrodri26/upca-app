@@ -1,9 +1,9 @@
 "use server";
 
-import { prisma } from "@/lib/prisma";
-import { requireAuth } from "@/lib/auth-middleware";
 import { revalidatePath } from "next/cache";
 import { Prisma } from "@/generated/prisma/client";
+import { requireAuth } from "@/lib/auth-middleware";
+import { prisma } from "@/lib/prisma";
 import {
   assignEvaluationSchema,
   submitResponseSchema,
@@ -23,9 +23,7 @@ export async function assignEvaluation(
   if (!parsed.success) {
     return {
       success: false,
-      error:
-        parsed.error.issues[0]?.message ??
-        "Datos de asignación inválidos",
+      error: parsed.error.issues[0]?.message ?? "Datos de asignación inválidos",
     };
   }
 
@@ -172,7 +170,11 @@ export async function submitResponse(
 ) {
   const session = await requireAuth();
 
-  const parsed = submitResponseSchema.safeParse({ assignmentId, questionId, value });
+  const parsed = submitResponseSchema.safeParse({
+    assignmentId,
+    questionId,
+    value,
+  });
   if (!parsed.success) {
     return {
       success: false,
@@ -213,7 +215,10 @@ export async function submitResponse(
   });
 
   if (!question || question.evaluationId !== assignment.evaluationId) {
-    return { success: false, error: "La pregunta no pertenece a esta evaluación" };
+    return {
+      success: false,
+      error: "La pregunta no pertenece a esta evaluación",
+    };
   }
 
   await prisma.response.upsert({

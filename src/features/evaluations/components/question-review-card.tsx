@@ -2,15 +2,11 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-} from "@/components/ui/card";
-import { QuestionStatusBadge } from "./evaluation-status-badge";
 import type { QuestionStatus } from "@/generated/prisma/client";
 import type { RateQuestionInput } from "@/lib/validators/evaluation";
+import { QuestionStatusBadge } from "./evaluation-status-badge";
 
 type QuestionData = {
   id: string;
@@ -153,7 +149,11 @@ export function QuestionReviewCard({
               placeholder="Editar afirmación..."
             />
             <div className="flex gap-2 justify-end">
-              <Button variant="ghost" size="sm" onClick={() => setEditing(false)}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setEditing(false)}
+              >
                 Cancelar
               </Button>
               <Button size="sm" onClick={handleSaveEdit}>

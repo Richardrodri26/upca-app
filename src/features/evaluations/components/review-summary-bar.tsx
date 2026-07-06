@@ -1,8 +1,8 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import type { EvaluationStatus } from "@/generated/prisma/client";
 import { EvaluationStatusBadge } from "./evaluation-status-badge";
-import type { QuestionStatus, EvaluationStatus } from "@/generated/prisma/client";
 
 type ReviewSummaryBarProps = {
   evaluationTitle: string;
@@ -33,7 +33,8 @@ export function ReviewSummaryBar({
   onActivate,
   isActivating,
 }: ReviewSummaryBarProps) {
-  const progress = totalQuestions > 0 ? (reviewedCount / totalQuestions) * 100 : 0;
+  const progress =
+    totalQuestions > 0 ? (reviewedCount / totalQuestions) * 100 : 0;
 
   return (
     <div className="sticky top-0 z-10 bg-background border-b pb-4 -mx-6 px-6 pt-4">

@@ -1,23 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useMyAssignments } from "@/features/assignments/queries";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AssignmentStatusBadge } from "@/features/assignments/components/assignment-status-badge";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { useMyAssignments } from "@/features/assignments/queries";
 
 export default function MyEvaluationsPage() {
   const { data: assignments = [], isLoading } = useMyAssignments();
 
   if (isLoading) {
     return (
-      <div className="text-muted-foreground py-16 text-center">
-        Cargando...
-      </div>
+      <div className="text-muted-foreground py-16 text-center">Cargando...</div>
     );
   }
 
@@ -43,7 +36,9 @@ export default function MyEvaluationsPage() {
                   </p>
                   <p className="text-sm mt-1">
                     <span className="text-muted-foreground">Evaluando a: </span>
-                    <span className="font-medium">{assignment.employee.name}</span>
+                    <span className="font-medium">
+                      {assignment.employee.name}
+                    </span>
                     <span className="text-muted-foreground ml-1 text-xs">
                       ({assignment.employee.email})
                     </span>

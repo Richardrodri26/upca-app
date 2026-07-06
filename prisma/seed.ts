@@ -1,7 +1,7 @@
-import { PrismaClient } from "../src/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
-import { Pool } from "pg";
 import { hashPassword } from "better-auth/crypto";
+import { Pool } from "pg";
+import { PrismaClient } from "../src/generated/prisma/client";
 import "dotenv/config";
 
 const pool = new Pool({
@@ -124,7 +124,9 @@ async function main() {
   console.log("   juan@upca.com      (EMPLOYEE)");
   console.log("   ana@upca.com       (EMPLOYEE)");
   console.log("");
-  console.log("ℹ️  Cargos, manuales y evaluaciones se crean desde la app conectada al RAG.");
+  console.log(
+    "ℹ️  Cargos, manuales y evaluaciones se crean desde la app conectada al RAG.",
+  );
 }
 
 main()

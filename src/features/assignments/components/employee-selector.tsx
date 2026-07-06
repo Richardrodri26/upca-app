@@ -35,19 +35,21 @@ function UserSelect({
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-sm font-medium">{label}</label>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-xs"
-      >
-        <option value="">Seleccionar...</option>
-        {users.map((u) => (
-          <option key={u.id} value={u.id}>
-            {u.name} — {u.email}
-          </option>
-        ))}
-      </select>
+      <label className="text-sm font-medium">
+        <span className="mb-1.5 block">{label}</span>
+        <select
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-xs"
+        >
+          <option value="">Seleccionar...</option>
+          {users.map((u) => (
+            <option key={u.id} value={u.id}>
+              {u.name} — {u.email}
+            </option>
+          ))}
+        </select>
+      </label>
     </div>
   );
 }
@@ -84,7 +86,12 @@ export function EmployeeSelector({
 
   const handleSubmit = () => {
     if (pending.length === 0) return;
-    onAssign(pending.map((p) => ({ employeeId: p.employee.id, evaluatorId: p.evaluator.id })));
+    onAssign(
+      pending.map((p) => ({
+        employeeId: p.employee.id,
+        evaluatorId: p.evaluator.id,
+      })),
+    );
     setPending([]);
   };
 
@@ -132,7 +139,9 @@ export function EmployeeSelector({
               >
                 <span>
                   <span className="font-medium">{p.employee.name}</span>
-                  <span className="text-muted-foreground mx-2">evaluado por</span>
+                  <span className="text-muted-foreground mx-2">
+                    evaluado por
+                  </span>
                   <span className="font-medium">{p.evaluator.name}</span>
                 </span>
                 <button

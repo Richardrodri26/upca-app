@@ -1,9 +1,8 @@
 "use server";
 
+import { getSession, requireAuth } from "@/lib/auth-middleware";
 import { prisma } from "@/lib/prisma";
-import { requireAuth, getSession } from "@/lib/auth-middleware";
 import { calculateIAP, calculateIRTO } from "./utils/iap";
-import type { Prisma } from "@/generated/prisma/client";
 
 // ────────────────────────────────────────
 // Dashboard stats (HR/ADMIN)
@@ -199,8 +198,7 @@ export async function getEmployeeResults(
   for (const q of questions) {
     const responses = allResponses.filter((r) => r.questionId === q.id);
     if (responses.length > 0) {
-      const avg =
-        responses.reduce((s, r) => s + r.value, 0) / responses.length;
+      const avg = responses.reduce((s, r) => s + r.value, 0) / responses.length;
       questionAverages.set(q.id, Math.round(avg * 10) / 10);
     }
   }

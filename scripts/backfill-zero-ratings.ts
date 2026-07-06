@@ -14,7 +14,9 @@ async function main() {
     where: { adequacyRating: 0 },
     data: { adequacyRating: null },
   });
-  console.log(`Repaired: relevance=${r.count} coherence=${c.count} adequacy=${a.count}`);
+  console.log(
+    `Repaired: relevance=${r.count} coherence=${c.count} adequacy=${a.count}`,
+  );
 }
 
 main().then(() => process.exit(0));

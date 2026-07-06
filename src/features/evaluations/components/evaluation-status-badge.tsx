@@ -1,9 +1,15 @@
 import { Badge } from "@/components/ui/badge";
-import type { EvaluationStatus, QuestionStatus } from "@/generated/prisma/client";
+import type {
+  EvaluationStatus,
+  QuestionStatus,
+} from "@/generated/prisma/client";
 
 const evaluationStatusConfig: Record<
   EvaluationStatus,
-  { variant: "default" | "secondary" | "destructive" | "outline"; label: string }
+  {
+    variant: "default" | "secondary" | "destructive" | "outline";
+    label: string;
+  }
 > = {
   DRAFT: { variant: "outline", label: "Borrador" },
   GENERATING: { variant: "secondary", label: "Generando" },
@@ -14,7 +20,10 @@ const evaluationStatusConfig: Record<
 
 const questionStatusConfig: Record<
   QuestionStatus,
-  { variant: "default" | "secondary" | "destructive" | "outline"; label: string }
+  {
+    variant: "default" | "secondary" | "destructive" | "outline";
+    label: string;
+  }
 > = {
   PENDING: { variant: "outline", label: "Pendiente" },
   APPROVED: { variant: "default", label: "Aprobada" },

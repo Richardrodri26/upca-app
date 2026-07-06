@@ -1,7 +1,7 @@
 "use client";
 
+import { parseAsString, useQueryState } from "nuqs";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useQueryState, parseAsString } from "nuqs";
 
 // ────────────────────────────────────────
 // Types
@@ -56,9 +56,18 @@ export function useTableState(config: TableStateConfig = {}): TableState {
   } = config;
 
   // URL-synced state via nuqs
-  const [search, setSearch] = useQueryState(searchKey, parseAsString.withDefault(""));
-  const [status, setStatus] = useQueryState(statusKey, parseAsString.withDefault("all"));
-  const [department, setDepartment] = useQueryState(departmentKey, parseAsString.withDefault("all"));
+  const [search, setSearch] = useQueryState(
+    searchKey,
+    parseAsString.withDefault(""),
+  );
+  const [status, setStatus] = useQueryState(
+    statusKey,
+    parseAsString.withDefault("all"),
+  );
+  const [department, setDepartment] = useQueryState(
+    departmentKey,
+    parseAsString.withDefault("all"),
+  );
 
   // Local input state for instant typing feel
   const [searchInput, setSearchInput] = useState(search);

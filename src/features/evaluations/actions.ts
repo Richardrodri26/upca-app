@@ -1,16 +1,20 @@
 "use server";
 
-import { prisma } from "@/lib/prisma";
-import { requireAuth } from "@/lib/auth-middleware";
 import { revalidatePath } from "next/cache";
+import { requireAuth } from "@/lib/auth-middleware";
+import { prisma } from "@/lib/prisma";
 import { generateEvaluation as ragGenerate } from "@/lib/rag-client";
 import {
-  rateQuestionSchema,
   type RateQuestionInput,
+  rateQuestionSchema,
 } from "@/lib/validators/evaluation";
 
 const DEFAULT_ENFOQUE = "Desempeño general de funciones y responsabilidades";
-import type { EvaluationStatus, QuestionStatus } from "@/generated/prisma/client";
+
+import type {
+  EvaluationStatus,
+  QuestionStatus,
+} from "@/generated/prisma/client";
 
 // ────────────────────────────────────────
 // Queries
@@ -68,10 +72,7 @@ export async function getPositionsWithProcessedManual() {
 // Mutations
 // ────────────────────────────────────────
 
-export async function generateEvaluation(
-  positionId: string,
-  enfoque?: string,
-) {
+export async function generateEvaluation(positionId: string, enfoque?: string) {
   const session = await requireAuth({ roles: ["ADMIN", "HR"] });
 
   const position = await prisma.position.findUnique({
@@ -104,6 +105,8 @@ export async function generateEvaluation(
     return { success: false, error: result.error };
   }
 
+  const manualId = position.manual.id;
+
   // Create evaluation + questions in a transaction
   const evaluation = await prisma.$transaction(async (tx) => {
     const eval_ = await tx.evaluation.create({
@@ -112,7 +115,7 @@ export async function generateEvaluation(
         status: "REVIEW",
         generationTime: result.data.generationTimeMs / 1000,
         positionId: position.id,
-        manualId: position.manual!.id,
+        manualId,
         createdById: session.user.id,
       },
     });
@@ -212,8 +215,7 @@ export async function activateEvaluation(evaluationId: string) {
   if (hasRejected) {
     return {
       success: false,
-      error:
-        "Hay preguntas rechazadas. Editalas o eliminalas antes de activar",
+      error: "Hay preguntas rechazadas. Editalas o eliminalas antes de activar",
     };
   }
 

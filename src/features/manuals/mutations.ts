@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { registerManual, deleteManual, syncManualsWithRag } from "./actions";
+import { deleteManual, registerManual, syncManualsWithRag } from "./actions";
 
 export function useRegisterManual() {
   const queryClient = useQueryClient();

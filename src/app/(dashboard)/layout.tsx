@@ -1,8 +1,8 @@
-import { redirect } from "next/navigation";
 import { headers } from "next/headers";
-import { auth } from "@/lib/auth";
-import { DashboardClientLayout } from "@/components/dashboard/dashboard-client-layout";
+import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
+import { DashboardClientLayout } from "@/components/dashboard/dashboard-client-layout";
+import { auth } from "@/lib/auth";
 
 export default async function DashboardLayout({
   children,

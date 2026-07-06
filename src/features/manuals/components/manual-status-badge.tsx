@@ -3,7 +3,10 @@ import type { ManualStatus } from "@/generated/prisma/client";
 
 const statusConfig: Record<
   ManualStatus,
-  { variant: "default" | "secondary" | "destructive" | "outline"; label: string }
+  {
+    variant: "default" | "secondary" | "destructive" | "outline";
+    label: string;
+  }
 > = {
   PENDING: { variant: "outline", label: "Pendiente" },
   PROCESSING: { variant: "secondary", label: "Procesando" },

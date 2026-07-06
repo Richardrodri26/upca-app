@@ -45,7 +45,9 @@ export const updateQuestionStatusSchema = z.object({
   status: z.enum(["APPROVED", "REJECTED"], { error: "Estado inválido" }),
 });
 
-export type UpdateQuestionStatusInput = z.infer<typeof updateQuestionStatusSchema>;
+export type UpdateQuestionStatusInput = z.infer<
+  typeof updateQuestionStatusSchema
+>;
 
 // ────────────────────────────────────────
 // Question — rate on 3 IAP dimensions

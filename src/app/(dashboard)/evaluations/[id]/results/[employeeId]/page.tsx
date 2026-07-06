@@ -1,13 +1,7 @@
 "use client";
 
 import { use } from "react";
-import { useEmployeeResults } from "@/features/results/queries";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -16,6 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useEmployeeResults } from "@/features/results/queries";
 
 const LIKERT_LABELS = [
   "",
@@ -76,9 +71,7 @@ export default function EmployeeResultsPage({
             </div>
             <div>
               <span className="text-muted-foreground">Email:</span>
-              <p className="font-medium">
-                {results.assignment.employee.email}
-              </p>
+              <p className="font-medium">{results.assignment.employee.email}</p>
             </div>
             <div>
               <span className="text-muted-foreground">Puntaje:</span>
@@ -103,9 +96,7 @@ export default function EmployeeResultsPage({
       {/* Question-by-question breakdown */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">
-            Desglose por pregunta
-          </CardTitle>
+          <CardTitle className="text-base">Desglose por pregunta</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
