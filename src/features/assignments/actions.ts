@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { Prisma } from "@/generated/prisma/client";
 import { requireAuth } from "@/lib/auth-middleware";
 import { prisma } from "@/lib/prisma";
 import {
@@ -42,31 +41,17 @@ export async function assignEvaluation(
     };
   }
 
-  let created = 0;
-  let skipped = 0;
-
-  for (const { employeeId, evaluatorId } of pairs) {
-    try {
-      await prisma.evaluationAssignment.create({
-        data: {
-          evaluationId,
-          employeeId,
-          evaluatorId,
-          status: "PENDING",
-        },
-      });
-      created++;
-    } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === "P2002"
-      ) {
-        skipped++;
-      } else {
-        throw error;
-      }
-    }
-  }
+  const result = await prisma.evaluationAssignment.createMany({
+    data: pairs.map(({ employeeId, evaluatorId }) => ({
+      evaluationId,
+      employeeId,
+      evaluatorId,
+      status: "PENDING" as const,
+    })),
+    skipDuplicates: true,
+  });
+  const created = result.count;
+  const skipped = pairs.length - created;
 
   revalidatePath("/evaluations");
   return { success: true, created, skipped };

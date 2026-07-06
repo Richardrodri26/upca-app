@@ -61,9 +61,6 @@ importers:
       react-dom:
         specifier: 19.2.4
         version: 19.2.4(react@19.2.4)
-      shadcn:
-        specifier: ^4.11.0
-        version: 4.11.0(patch_hash=8513e6ee0b3bd15af5b2f1cf37e49c2934073192eb3ed9fcbd28aed08d3aa8b7)(typescript@5.9.3)
       tailwind-merge:
         specifier: ^3.6.0
         version: 3.6.0
@@ -98,6 +95,9 @@ importers:
       prisma:
         specifier: ^7.8.0
         version: 7.8.0(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)
+      shadcn:
+        specifier: ^4.11.0
+        version: 4.11.0(patch_hash=8513e6ee0b3bd15af5b2f1cf37e49c2934073192eb3ed9fcbd28aed08d3aa8b7)(typescript@5.9.3)
       tailwindcss:
         specifier: ^4
         version: 4.3.1

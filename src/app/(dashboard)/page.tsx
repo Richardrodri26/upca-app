@@ -261,11 +261,7 @@ function EmployeeDashboard() {
                         </span>
                       )}
                       <Link
-                        href={
-                          a.status === "COMPLETED"
-                            ? `/my-evaluations/${a.id}`
-                            : `/my-evaluations/${a.id}`
-                        }
+                        href={`/my-evaluations/${a.id}`}
                         className="text-xs hover:underline text-primary"
                       >
                         {a.status === "COMPLETED" ? "Ver" : "Responder"}

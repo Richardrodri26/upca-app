@@ -169,7 +169,7 @@ export async function getEmployeeResults(
     return { error: "No autorizado" };
   }
 
-  const [assignment, questions, allResponses] = await Promise.all([
+  const [assignment, questions, grouped] = await Promise.all([
     prisma.evaluationAssignment.findFirst({
       where: { evaluationId, employeeId },
       include: {
@@ -183,9 +183,10 @@ export async function getEmployeeResults(
       where: { evaluationId },
       orderBy: { order: "asc" },
     }),
-    prisma.response.findMany({
+    prisma.response.groupBy({
+      by: ["questionId"],
       where: { assignment: { evaluationId } },
-      select: { questionId: true, value: true },
+      _avg: { value: true },
     }),
   ]);
 
@@ -194,14 +195,14 @@ export async function getEmployeeResults(
   }
 
   // Map per-question averages across all employees
-  const questionAverages = new Map<string, number>();
-  for (const q of questions) {
-    const responses = allResponses.filter((r) => r.questionId === q.id);
-    if (responses.length > 0) {
-      const avg = responses.reduce((s, r) => s + r.value, 0) / responses.length;
-      questionAverages.set(q.id, Math.round(avg * 10) / 10);
-    }
-  }
+  const questionAverages = new Map(
+    grouped
+      .filter((g) => g._avg.value != null)
+      .map((g) => [
+        g.questionId,
+        Math.round((g._avg.value as number) * 10) / 10,
+      ]),
+  );
 
   const employeeResponses = await prisma.response.findMany({
     where: { assignmentId: assignment.id },
