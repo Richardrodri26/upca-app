@@ -25,9 +25,10 @@ touched — do NOT treat repo-wide `pnpm lint` as a pass/fail signal.
 | 006 | Fix actively-wrong docs (RAG contract, AGENTS.md, README) | P2 | S | — | DONE |
 | 007 | Performance + dead-code quick wins | P2 | S–M | 003 | DONE (gates green; smoke PENDING OPERATOR) |
 | 008 | Consolidate the triplicated Position+Manual sync | P2 | M | 005 | DONE (0 duplicates on dev; smoke + UI-warning surfacing PENDING OPERATOR) |
-| 009 | Make "Exportar Resultados" actually export (CSV) | P2 | S | 001 | TODO |
-| 010 | Employee-facing "Mis Resultados" view | P3 | M | 001 | TODO |
-| 011 | Admin user management + close open sign-up (spike+build) | P3 | M | 001 | TODO |
+| 009 | Make "Exportar Resultados" actually export (CSV) | P2 | S | 001 | DONE (gates green; smoke PENDING OPERATOR) |
+| 010 | Employee-facing "Mis Resultados" view | P3 | M | 001 | DONE (gates green; smoke + leak-check PENDING OPERATOR) |
+| 011 | Admin user management + close open sign-up (spike+build) | P3 | M | 001 | PARTIAL — Step 0 spike delivered + Steps 1-3 user-list UI built; Step 4 (auth.ts + /sign-up gating) PENDING OPERATOR DECISION on sign-up policy |
+| 011 | Knowledge-base vs Manuals product decision (spike) | P3 | M | — | DONE — recommendation: Option A (KB replaces Manuals); operator review pending |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (one-line reason) |
 REJECTED (one-line rationale).
