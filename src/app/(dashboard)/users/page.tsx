@@ -25,9 +25,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useSession } from "@/features/auth/hooks/use-session";
-import { USER_ROLES, type UserRole } from "@/lib/validators/user";
-import { useAllUsers, useSetUserRole } from "@/features/users/queries";
 import type { UserRow } from "@/features/users/actions";
+import { useAllUsers, useSetUserRole } from "@/features/users/queries";
+import { USER_ROLES, type UserRole } from "@/lib/validators/user";
 
 const ROLE_LABELS: Record<UserRole, string> = {
   ADMIN: "Administrador",
@@ -61,9 +61,7 @@ export default function UsersPage() {
     () => [
       columnHelper.accessor("name", {
         header: "Nombre",
-        cell: (info) => (
-          <span className="font-medium">{info.getValue()}</span>
-        ),
+        cell: (info) => <span className="font-medium">{info.getValue()}</span>,
       }),
       columnHelper.accessor("email", {
         header: "Email",
@@ -105,7 +103,8 @@ export default function UsersPage() {
         ),
       }),
     ],
-    [setRoleMutation],
+    // biome-ignore lint/correctness/useExhaustiveDependencies: handleRoleChange is intentionally a plain async function per Plan 005 convention; useCallback refactor deferred (Plan 011 maintenance notes).
+    [handleRoleChange],
   );
 
   const table = useReactTable({
@@ -135,9 +134,7 @@ export default function UsersPage() {
       {status && (
         <p
           className={
-            status.ok
-              ? "text-sm text-emerald-600"
-              : "text-sm text-destructive"
+            status.ok ? "text-sm text-emerald-600" : "text-sm text-destructive"
           }
         >
           {status.message}
@@ -165,7 +162,7 @@ export default function UsersPage() {
                       >
                         {flexRender(
                           header.column.columnDef.header,
-                          header.column.getContext(),
+                          header.getContext(),
                         )}
                         {header.column.getIsSorted() === "asc"
                           ? " ▲"
@@ -194,7 +191,10 @@ export default function UsersPage() {
                 <TableRow key={row.id}>
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      )}
                     </TableCell>
                   ))}
                 </TableRow>

@@ -63,10 +63,15 @@ export async function setUserRole(
   }
 
   // Prevent self-demotion lockout (extra safety on top of last-admin guard).
-  if (userId === session.user.id && currentUser.role === "ADMIN" && targetRole !== "ADMIN") {
+  if (
+    userId === session.user.id &&
+    currentUser.role === "ADMIN" &&
+    targetRole !== "ADMIN"
+  ) {
     return {
       ok: false,
-      error: "No puedes degradar tu propia cuenta mientras eres el único administrador",
+      error:
+        "No puedes degradar tu propia cuenta mientras eres el único administrador",
     };
   }
 

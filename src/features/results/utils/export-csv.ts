@@ -65,5 +65,5 @@ export function buildResultsCsv(results: EvaluationResults): string {
     );
   }
 
-  return BOM + rows.join("\r\n") + "\r\n";
+  return `${BOM + rows.join("\r\n")}\r\n`;
 }

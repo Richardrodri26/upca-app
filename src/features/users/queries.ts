@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { getAllUsers, setUserRole } from "./actions";
 import type { UserRole } from "@/lib/validators/user";
+import { getAllUsers, setUserRole } from "./actions";
 
 export function useAllUsers() {
   return useQuery({
