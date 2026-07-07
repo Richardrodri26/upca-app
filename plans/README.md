@@ -28,7 +28,7 @@ touched — do NOT treat repo-wide `pnpm lint` as a pass/fail signal.
 | 009 | Make "Exportar Resultados" actually export (CSV) | P2 | S | 001 | DONE (gates green; smoke PENDING OPERATOR) |
 | 010 | Employee-facing "Mis Resultados" view | P3 | M | 001 | DONE (gates green; smoke + leak-check PENDING OPERATOR) |
 | 011 | Admin user management + close open sign-up (spike+build) | P3 | M | 001 | DONE — admin-created accounts; /sign-up redirects to /sign-in; env-driven first-admin bootstrap |
-| 011 | Knowledge-base vs Manuals product decision (spike) | P3 | M | — | DONE — recommendation: Option A (KB replaces Manuals); operator review pending |
+| 011 | Knowledge-base vs Manuals product decision (spike) | P3 | M | — | DONE — operator chose Option C (KB + Manuals coexist, roles split); bulk-sync contradiction flagged for team confirmation |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (one-line reason) |
 REJECTED (one-line rationale).
