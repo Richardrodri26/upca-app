@@ -1,7 +1,9 @@
 # Decisión: Knowledge Base vs Manuals — coexistencia de los dos flujos de carga de manuales
 
 > **Spike plan 011.** Documento de decisión — no code. El operador revisa y
-> acepta o pisa la recomendación. Fecha: 2026-07-05.
+> acepta o pisa la recomendación. Fecha: 2026-07-05. **Re-escrito
+> 2026-07-06**: la recomendación original (Opción A) fue reemplazada por
+> Opción C por decisión del operador — ver `.bak` para la versión original.
 
 ## Nota de drift
 
@@ -103,86 +105,119 @@ el costo semántico es mayor que A: "Manuales" absorbe un concepto (RAG store)
 que no le es natural.
 
 ### C. Ambos quedan, roles split
-KB = gestión documental / contenido RAG (upload, view/edit, delete del RAG).
-Manuals = vista registro app-side (read-only + botón sync). **Costos**: (1)
-modelo mental duplicado **permanente** — "¿dónde cargo un manual?" sigue
-siendo ambigua; (2) necesidad de una regla explícita de qué flujo crea
-`Position` (hoy ambos pueden, vía `syncPositionAndManual`); (3) dos sidebar
-entries para el mismo concepto para siempre; (4) drift de UI/estado entre la
-tabla `Manual` (DB) y la tabla cargos (RAG) que el usuario debe reconciliar
-mentalmente. **Beneficio**: zero migration cost hoy. Pero congela la
-deuda.
+KB = gestión documental / contenido RAG (upload, view/edit, save, delete del
+RAG store); es la superficie canónica de creación de `Position`. Manuals =
+vista registro app-side **read-only** (lista de filas `Manual` + badge de
+estado + botón "Sincronizar con RAG" bulk); pierde la UI "Registrar Manual"
+per-position y su path inline de find-or-create de `Position`. **Costos**:
+(1) modelo mental duplicado **permanente** — "¿dónde cargo un manual?" se
+responde por convención (KB escribe, Manuals lee+sync), no por unificación;
+(2) necesidad de una regla explícita "sólo KB crea Positions vía
+`syncPositionAndManual`" (§3); (3) dos sidebar entries para el mismo concepto
+para siempre; (4) drift de UI/estado entre la tabla `Manual` (DB) y la tabla
+cargos (RAG) que el usuario debe reconciliar mentalmente. **Beneficio**: zero
+migration cost hoy; ambas surfaces siguen funcionando sin tocar rutas ni
+mover consumers; la invariant del helper del plan 008 se preserva y se
+documenta.
 
-## 3. Recomendación: **A — KB reemplaza Manuals**
+## 3. Recomendación: **C — Ambos quedan, roles split**
 
-KB ya cubre el flujo completo (upload→procesar→revisar→guardar→CRUD sobre
-RAG) y el caso "cargo ya indexado en RAG" se reduce a una acción secundaria
-que llama al mismo `syncPositionAndManual`, sin segundo feature. La
-generación de evaluaciones depende de `getPositionsWithProcessedManual`
-(Position + fila `Manual` PROCESSED), **no** de la página `/manuals`, así
-que retirar la UI de Manuals no rompe ningún consumer real — sólo
-`getPositionsWithoutManual` y `registerManual` pierden UI, y ambos se
-reemplazan por la nueva acción "Vincular cargo ya indexado" en KB. El
-helper `syncPositionAndManual` del plan 008 queda como **único** punto de
-creación, que es justo la invariant que 008 buscaba consolidar. La opción C
-congela la deuda de modelo mental; la opción B cuesta más migración
-semántica que A y produce un "Manuales" que ya no significa manuales. A es
-la opción de menor costo total y la única que cierra la ambigüedad de HR.
+KB cubre el flujo completo de gestión documental sobre el RAG
+(upload→procesar→revisar→guardar→CRUD) y Manuals ya tiene la tabla registro +
+el botón bulk de sync — reusar lo que existe cuesta cero migración hoy y evita
+redirigir rutas o mover consumers. La regla operativa que desambigua
+"¿dónde cargo un manual?" es: **KB es la superficie de escritura** (upload,
+edit, save, delete del RAG store) y **Manuals es la vista read-only** (lista +
+badge de estado + botón "Sincronizar con RAG" bulk); se quita la UI "Registrar
+Manual" per-position. **Sólo KB crea Positions vía `syncPositionAndManual`**
+— Manuals deja de tener su propio path find-or-create de `Position`
+(`registerManual` se simplifica o depreca, ver §4). La generación de
+evaluaciones depende de `getPositionsWithProcessedManual` (Position + fila
+`Manual` PROCESSED), **no** de la página `/manuals`, así que volver Manuals
+read-only no rompe ningún consumer. C sí congela la deuda de modelo mental
+(dos sidebar entries para el mismo concepto), pero la acota a una regla clara
+—un solo escritor de Positions— y deja ambas surfaces funcionando sin tocar
+rutas.
 
 ### Follow-up code tasks (cada uno → futuro plan)
 
-- Agregar acción "Vincular cargo ya indexado" en KB (`syncPositionAndManual`
-  sin upload) que reemplace `registerManual`.
-- Surfear `syncWarning` en `UploadCargoDialog` y `ViewEditCargoDialog` tras
-  guardar (follow-up explicit del plan 008 cuya timing dependía de este
-  spike).
-- Mover el botón "Sincronizar con RAG" (bulk `syncWithRag`) a la página KB.
-- Retirar `/manuals` (route + sidebar entry) y agregar redirect
-  `/manuals → /knowledge-base`.
-- Remover `features/manuals/` (acciones `registerManual`, `getManuals`,
-  `getPositionsWithoutManual`, `deleteManual`, `syncManualsWithRag`,
-  components, mutations, queries) — o migrar lo que reutilice KB.
-- Auditar callers de `getPositionsWithoutManual` / `registerManual` /
-  `deleteManual` fuera de `features/manuals/` antes de borrar.
-- Decidir política de `department` (ver §5) y, según decisión, agregar paso
-  "departamento" al wizard de KB o un job de reconciliación.
-- Cambiar `syncPositionAndManual` para que escriba `department: null` (no
-  la string `"Sin departamento"`) y migrar filas existentes con esa string
-  a `null`.
-- Actualizar `docs/roadmap.md` para mencionar KB como entrada canónica de
-  cargos/manuales.
+- Conservar los flujos de escritura de KB (upload, edit, save, delete) como
+  el path canónico de creación de Positions.
+- Convertir `/manuals` en READ-ONLY: lista de filas `Manual` + badge de
+  estado + botón "Sincronizar con RAG" (bulk). Remover la UI "Registrar
+  Manual" (el flujo per-position de crear `Manual` PENDING).
+- Simplificar `registerManual`: dropear su find-or-create de Position; o
+  delegar al helper `syncPositionAndManual` para el caso "cargo ya en RAG", o
+  deprecarla (decidir cuál y explicar).
+- Surfear `syncWarning` devuelto por `guardarCargo` en `UploadCargoDialog` y
+  `ViewEditCargoDialog` (follow-up del plan 008 ahora scopeado a flujos de KB
+  únicamente).
+- Agregar documentación explícita en código: un comentario en
+  `src/lib/position-manual-sync.ts` con el texto "this is the ONLY sanctioned
+  Position create path; Manuals must NOT inline its own."
+- Decidir política de `department` (ver §5): agregar paso "departamento" al
+  wizard de KB O un script de reconciliación que busque filas con
+  `department="Sin departamento"` y prompting/derive el valor correcto.
+- Actualizar `docs/roadmap.md` para mencionar KB y Manuals como surfaces
+  coexistentes con roles split (dominio doc-fix del plan 006).
 
 ## 4. Implicaciones para el plan 008
 
-Bajo la recomendación A **sobreviven**:
+Bajo la recomendación C **sobreviven**:
 
-- `src/lib/position-manual-sync.ts` — `syncPositionAndManual` sigue siendo
-  el **único** punto de creación de `Position`+`Manual` PROCESSED. Tanto
-  `guardarCargo` como el bulk loop de `syncWithRag` lo siguen llamando.
-- `src/lib/rag-sync.ts` — `syncWithRag` sobrevive, repurposeado como
-  acción "Sincronizar todo" dentro de KB (en vez de botón en `/manuals`).
-- El contrato "todo camino de cargo pasa por el helper" se refuerza: la
-  nueva acción "Vincular cargo ya indexado" también lo llama.
+- `src/lib/position-manual-sync.ts` — `syncPositionAndManual` sigue siendo el
+  **único** punto del codebase que hace find-or-create case-insensitive de
+  `Position` + `Manual` PROCESSED. Lo siguen llamando: `guardarCargo` (KB,
+  `actions.ts:83`) y el bulk loop de `syncWithRag` (`rag-sync.ts:35`).
+- `src/lib/rag-sync.ts` — `syncWithRag` sobrevive como motor del botón
+  "Sincronizar con RAG" que **se queda en `/manuals`** (acción bulk read-only
+  a nivel UI). El helper que invoca es el mismo que usa KB al guardar.
+- El contrato "todo camino de cargo pasa por el helper" se **refuerza**: KB
+  write flows + bulk sync lo llaman; Manuals pierde su path inline.
 
-**No sobrevive**:
+**Se simplifica / pierde lógica**:
 
-- `registerManual` (`features/manuals/actions.ts:39-99`) — su lógica inline
-  de "crear `Manual` PENDING → verificar en RAG → pasar a `PROCESSED`/`ERROR`"
-  se reemplaza por `syncPositionAndManual` directo (que ya hace find-or-create
-  case-insensitive y marca `PROCESSED`). La verificación "existe en RAG" se
-  mantiene pero como un guard previo (`getCargos().includes(cargo)`) en la
-  nueva acción KB, no como creación-then-flip.
-- `deleteManual` (`features/manuals/actions.ts:112-138`) — se reemplaza por
-  `eliminarCargo` de KB, que ya hace el bloqueo de evaluaciones + borrado
-  RAG + borrado DB best-effort. Hoy `deleteManual` **sólo borra la fila DB**
-  (no toca RAG) — es un comportamiento inconsistente que A elimina.
-- `getManuals` y `getPositionsWithoutManual` pierden su UI consumer; se
-  evalúa caso por caso si KB las reusa (p.ej. `getKnowledgeBaseCargos`
-  ya cubre el listado) o se borran.
+- `registerManual` (`features/manuals/actions.ts:39-99`) — **pierde su
+  find-or-create de Position**. Su lógica inline "crear `Manual` PENDING →
+  verificar en RAG → pasar a `PROCESSED`/`ERROR`" ya no puede crear
+  `Position`. Dos caminos: **(a) delegar** al helper
+  `syncPositionAndManual(cargoName)` cuando el cargo ya está indexado en RAG
+  (el helper hace find-or-create + marca `PROCESSED`), dejando a
+  `registerManual` como thin wrapper que sólo valida "existe en RAG"
+  (`getCargos().includes(cargo)`) antes de llamarlo; o **(b) deprecar**
+  `registerManual` y mover el caso "cargo ya indexado" a una acción nueva en
+  KB que también llama al helper. El equipo decide en el follow-up de §3. En
+  cualquiera de los dos casos, Manuals **no** inlinea su propio find-or-create
+  — cumple la invariant del plan 008. Lo que `registerManual` **sí** puede
+  seguir haciendo es flippear filas `Manual` existentes a `PROCESSED` cuando
+  un cargo ya aparece en RAG — pero **sin crear `Position`**: llama al helper
+  o se niega.
+- `getManuals` y la tabla `Manual` se **preservan** como vista read-only (la
+  fila `Manual` sigue siendo el registro app-side del estado de
+  sincronización por cargo).
+- `getPositionsWithoutManual` pierde sentido en Manuals read-only (ya no hay
+  "registrar manual a un position sin manual" desde esa UI) — se evalúa si KB
+  la reusa o se borra.
+- `deleteManual` (`features/manuals/actions.ts:112-138`) — bajo C **se remueve
+  de la UI** de Manuals (read-only no borra); el borrado queda en KB vía
+  `eliminarCargo`, que ya hace bloqueo de evaluaciones + borrado RAG + borrado
+  DB best-effort. La función puede quedarse como interna o borrarse.
 
-El follow-up de plan 008 "surfear `syncWarning` en el diálogo" **se
-transfiere** a la lista de follow-ups de A arriba — su timing ya no es
-independiente: va atado al redesign del diálogo KB.
+**Caminos de sync que sobreviven**: (1) `guardarCargo` (KB) →
+`syncPositionAndManual` best-effort al guardar un cargo; (2) `syncWithRag`
+bulk loop (botón en `/manuals`) → `syncPositionAndManual` por cada cargo del
+RAG. Ambos pasan por el helper; no se reintroduce find-or-create inline en
+ningún lado.
+
+> **Nuance a flaggear (posible contradicción)**: la regla del §3 "sólo KB
+> crea Positions vía `syncPositionAndManual`" es una convención a nivel UX
+> (KB es la superficie de creación canónica). A nivel código, el botón bulk
+> "Sincronizar con RAG" hosteado en Manuals **también** termina creando
+> Positions — pero lo hace vía el helper compartido, no vía un path inline
+> propio. Si el equipo quiere que ni siquiera el bulk sync cree Positions,
+> habría que mover el botón a KB o hacer que `syncWithRag` sólo flipee filas
+> `Manual` existentes sin crear `Position` nuevas (cambio mayor, fuera de
+> scope de C). Se deja documentado para que el equipo lo confirme.
 
 ## 5. Decisión pendiente del equipo — política de `department`
 
@@ -191,27 +226,26 @@ independiente: va atado al redesign del diálogo KB.
 cargo no existe previamente. El formulario de positions
 (`features/positions/components/position-form.tsx:105-120` +
 `lib/validators/position.ts:12-17`) tiene `department` **opcional** (string
-max 100, no requerido) — el plan lo describía como "requiere un departamento
-real", pero en realidad el schema lo permite vacío. El problema real es otro:
-el helper escribe la **string** `"Sin departamento"`, que **contamina el
-dropdown de filtro por departamento** de `/positions`
-(`features/positions/actions.ts:71-78` lo lista vía `distinct("department")`)
-apareciendo como un departamento falso.
+max 100, no requerido). El problema real: el helper escribe la **string**
+`"Sin departamento"`, que **contamina el dropdown de filtro por departamento**
+de `/positions` (`features/positions/actions.ts:71-78` lo lista vía
+`distinct("department")`) apareciendo como un departamento falso.
 
-El equipo debe decidir **quén llena el departamento real y cuándo**:
+El equipo debe decidir **quién llena el departamento real y cuándo**:
 
 - **(i)** HR lo completa después vía el CRUD de positions (flujo reactivo,
   deuda visible en la tabla).
 - **(ii)** Agregar un campo "departamento" al wizard de `UploadCargoDialog`
-  antes de guardar, pasado a `syncPositionAndManual` como arg nuevo.
+  (KB) antes de guardar, pasado a `syncPositionAndManual` como arg nuevo.
 - **(iii)** Un job/listado de reconciliación "Positions con departamento
-  pendiente" que HR triaga.
+  pendiente" que HR triage.
 
-Recomendación técnica (no vinculante): combinar **(ii) + cambiar el helper a
-`department: null`** + migrar las filas existentes `"Sin departamento"` a
-`null`. `null` no aparece en el dropdown de departments
-(`where: { department: { not: null } }` en `actions.ts:73`), así la deuda
-queda silenciada en la UI sin negar que existe. La opción (i) sola no resuelve
-la contaminación del dropdown; la (iii) es útil como red de seguridad pero no
-como flujo principal. Esta decisión es **del equipo** y bloquea el follow-up
-"agregar paso departamento al wizard" del §3.
+Bajo la Opción C esta pregunta **sigue abierta**: el placeholder
+`"Sin departamento"` escrito por KB sigue ahí hasta que se construya un paso
+wizard (ii) o un job de reconciliación (iii). Recomendación técnica (no
+vinculante): combinar **(ii) + cambiar el helper a `department: null`** +
+migrar las filas existentes `"Sin departamento"` a `null`. `null` no aparece
+en el dropdown (`where: { department: { not: null } }` en `actions.ts:73`),
+así la deuda queda silenciada en la UI sin negar que existe. Esta decisión es
+**del equipo** y bloquea el follow-up "agregar paso departamento al wizard"
+del §3.
