@@ -1,5 +1,6 @@
 "use client";
 
+import { useForm } from "@tanstack/react-form";
 import {
   createColumnHelper,
   flexRender,
@@ -9,6 +10,19 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { useMemo, useState } from "react";
+import { FieldError } from "@/components/atoms/field-error";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -26,8 +40,17 @@ import {
 } from "@/components/ui/table";
 import { useSession } from "@/features/auth/hooks/use-session";
 import type { UserRow } from "@/features/users/actions";
-import { useAllUsers, useSetUserRole } from "@/features/users/queries";
-import { USER_ROLES, type UserRole } from "@/lib/validators/user";
+import {
+  useAllUsers,
+  useCreateUser,
+  useSetUserRole,
+} from "@/features/users/queries";
+import {
+  type CreateUserInput,
+  createUserSchema,
+  USER_ROLES,
+  type UserRole,
+} from "@/lib/validators/user";
 
 const ROLE_LABELS: Record<UserRole, string> = {
   ADMIN: "Administrador",
@@ -41,12 +64,37 @@ export default function UsersPage() {
   const { data: session } = useSession();
   const { data: users = [], isLoading } = useAllUsers();
   const setRoleMutation = useSetUserRole();
+  const createUserMutation = useCreateUser();
   const [sorting, setSorting] = useState<SortingState>([]);
   const [status, setStatus] = useState<{ ok: boolean; message: string } | null>(
     null,
   );
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
 
   const isAdmin = session?.user?.role === "ADMIN";
+
+  const form = useForm({
+    defaultValues: {
+      name: "",
+      email: "",
+      password: "",
+      role: "EMPLOYEE",
+    } as CreateUserInput,
+    validators: {
+      onChange: createUserSchema,
+    },
+    onSubmit: async ({ value }) => {
+      setCreateError(null);
+      const result = await createUserMutation.mutateAsync(value);
+      if (result.ok) {
+        setStatus({ ok: true, message: "Usuario creado" });
+        setCreateOpen(false);
+      } else {
+        setCreateError(result.error);
+      }
+    },
+  });
 
   const handleRoleChange = async (userId: string, role: UserRole) => {
     const result = await setRoleMutation.mutateAsync({ userId, role });
@@ -55,6 +103,14 @@ export default function UsersPage() {
     } else {
       setStatus({ ok: false, message: result.error });
     }
+  };
+
+  const handleCreateOpenChange = (open: boolean) => {
+    if (open) {
+      form.reset();
+      setCreateError(null);
+    }
+    setCreateOpen(open);
   };
 
   const columns = useMemo(
@@ -129,7 +185,132 @@ export default function UsersPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold tracking-tight">Usuarios</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold tracking-tight">Usuarios</h1>
+        <Dialog open={createOpen} onOpenChange={handleCreateOpenChange}>
+          <DialogTrigger render={<Button>Crear Usuario</Button>} />
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Crear Usuario</DialogTitle>
+              <DialogDescription>
+                Crea una cuenta con rol. Comparte la contraseña con la persona
+                fuera de la aplicación.
+              </DialogDescription>
+            </DialogHeader>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                form.handleSubmit();
+              }}
+              className="flex flex-col gap-4"
+            >
+              <form.Field name="name">
+                {(field) => (
+                  <div className="flex flex-col gap-1.5">
+                    <Label htmlFor={field.name}>Nombre</Label>
+                    <Input
+                      id={field.name}
+                      name={field.name}
+                      type="text"
+                      placeholder="Nombre completo"
+                      value={field.state.value}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      onBlur={field.handleBlur}
+                    />
+                    <FieldError errors={field.state.meta.errors} />
+                  </div>
+                )}
+              </form.Field>
+
+              <form.Field name="email">
+                {(field) => (
+                  <div className="flex flex-col gap-1.5">
+                    <Label htmlFor={field.name}>Email</Label>
+                    <Input
+                      id={field.name}
+                      name={field.name}
+                      type="email"
+                      placeholder="usuario@upca.com"
+                      value={field.state.value}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      onBlur={field.handleBlur}
+                    />
+                    <FieldError errors={field.state.meta.errors} />
+                  </div>
+                )}
+              </form.Field>
+
+              <form.Field name="role">
+                {(field) => (
+                  <div className="flex flex-col gap-1.5">
+                    <Label htmlFor={field.name}>Rol</Label>
+                    <Select
+                      value={field.state.value}
+                      onValueChange={(v) => {
+                        if (v) field.handleChange(v as UserRole);
+                      }}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue>
+                          {ROLE_LABELS[field.state.value]}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {USER_ROLES.map((r) => (
+                          <SelectItem key={r} value={r}>
+                            {ROLE_LABELS[r]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FieldError errors={field.state.meta.errors} />
+                  </div>
+                )}
+              </form.Field>
+
+              <form.Field name="password">
+                {(field) => (
+                  <div className="flex flex-col gap-1.5">
+                    <Label htmlFor={field.name}>Contraseña inicial</Label>
+                    <Input
+                      id={field.name}
+                      name={field.name}
+                      type="password"
+                      placeholder="Mínimo 8 caracteres"
+                      value={field.state.value}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      onBlur={field.handleBlur}
+                    />
+                    <FieldError errors={field.state.meta.errors} />
+                  </div>
+                )}
+              </form.Field>
+
+              {createError ? (
+                <p className="text-sm text-destructive">{createError}</p>
+              ) : null}
+
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setCreateOpen(false)}
+                >
+                  Cancelar
+                </Button>
+                <form.Subscribe selector={(state) => state.isSubmitting}>
+                  {(isSubmitting) => (
+                    <Button type="submit" disabled={isSubmitting}>
+                      {isSubmitting ? "Creando..." : "Crear usuario"}
+                    </Button>
+                  )}
+                </form.Subscribe>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
 
       {status && (
         <p

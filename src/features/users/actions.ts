@@ -1,8 +1,14 @@
 "use server";
 
+import { hashPassword } from "better-auth/crypto";
 import { requireAuth } from "@/lib/auth-middleware";
 import { prisma } from "@/lib/prisma";
-import { setUserRoleSchema, type UserRole } from "@/lib/validators/user";
+import {
+  type CreateUserInput,
+  createUserSchema,
+  setUserRoleSchema,
+  type UserRole,
+} from "@/lib/validators/user";
 
 export type UserRow = {
   id: string;
@@ -78,6 +84,52 @@ export async function setUserRole(
   await prisma.user.update({
     where: { id: targetUserId },
     data: { role: targetRole },
+  });
+
+  return { ok: true };
+}
+
+export async function createUser(
+  input: CreateUserInput,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  await requireAuth({ roles: ["ADMIN"] });
+
+  const parsed = createUserSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: parsed.error.issues[0]?.message ?? "Datos inválidos",
+    };
+  }
+
+  const { name, email, password, role } = parsed.data;
+
+  const existing = await prisma.user.findUnique({
+    where: { email },
+    select: { id: true },
+  });
+  if (existing) {
+    return { ok: false, error: "Ya existe un usuario con ese email" };
+  }
+
+  // hashPassword is Better Auth's official exposed hashing helper
+  // (better-auth/crypto) — the same primitive the admin plugin uses
+  // internally via ctx.context.password.hash. Verified to produce hashes
+  // that signIn.email verifies against (see prisma/seed.ts).
+  const hashedPassword = await hashPassword(password);
+
+  await prisma.$transaction(async (tx) => {
+    const user = await tx.user.create({
+      data: { name, email, emailVerified: true, role },
+    });
+    await tx.account.create({
+      data: {
+        accountId: user.id,
+        providerId: "credential",
+        userId: user.id,
+        password: hashedPassword,
+      },
+    });
   });
 
   return { ok: true };

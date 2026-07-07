@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { UserRole } from "@/lib/validators/user";
-import { getAllUsers, setUserRole } from "./actions";
+import type { CreateUserInput, UserRole } from "@/lib/validators/user";
+import { createUser, getAllUsers, setUserRole } from "./actions";
 
 export function useAllUsers() {
   return useQuery({
@@ -15,6 +15,16 @@ export function useSetUserRole() {
   return useMutation({
     mutationFn: ({ userId, role }: { userId: string; role: UserRole }) =>
       setUserRole(userId, role),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+    },
+  });
+}
+
+export function useCreateUser() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: CreateUserInput) => createUser(input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
     },

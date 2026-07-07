@@ -31,22 +31,45 @@ async function main() {
   // Create users with hashed passwords
   const defaultPassword = await hashPassword("password123");
 
-  const admin = await prisma.user.create({
-    data: {
+  // First-admin bootstrap: env-driven + idempotent (upsert by email).
+  // Demo users below keep their demo password; the admin credentials come
+  // from the environment so no real value is hardcoded in source.
+  const adminEmail = process.env.SEED_ADMIN_EMAIL;
+  const adminPassword = process.env.SEED_ADMIN_PASSWORD;
+  if (!adminEmail || !adminPassword) {
+    throw new Error(
+      "SEED_ADMIN_EMAIL and SEED_ADMIN_PASSWORD must be set to bootstrap the first admin. Add them to your .env.",
+    );
+  }
+  const adminHashed = await hashPassword(adminPassword);
+  const admin = await prisma.user.upsert({
+    where: { email: adminEmail },
+    update: { name: "Admin User", emailVerified: true, role: "ADMIN" },
+    create: {
       name: "Admin User",
-      email: "admin@upca.com",
+      email: adminEmail,
       emailVerified: true,
       role: "ADMIN",
     },
   });
-  await prisma.account.create({
-    data: {
-      accountId: admin.id,
-      providerId: "credential",
-      userId: admin.id,
-      password: defaultPassword,
-    },
+  const existingAdminAccount = await prisma.account.findFirst({
+    where: { userId: admin.id, providerId: "credential" },
   });
+  if (existingAdminAccount) {
+    await prisma.account.update({
+      where: { id: existingAdminAccount.id },
+      data: { password: adminHashed },
+    });
+  } else {
+    await prisma.account.create({
+      data: {
+        accountId: admin.id,
+        providerId: "credential",
+        userId: admin.id,
+        password: adminHashed,
+      },
+    });
+  }
 
   const hr1 = await prisma.user.create({
     data: {
@@ -118,7 +141,9 @@ async function main() {
   console.log("🎉 Seed completado!");
   console.log("");
   console.log("📧 Cuentas de prueba (contraseña: password123):");
-  console.log("   admin@upca.com     (ADMIN)");
+  console.log(
+    `   ${adminEmail}  (ADMIN, contraseña desde SEED_ADMIN_PASSWORD)`,
+  );
   console.log("   hr1@upca.com       (HR)");
   console.log("   hr2@upca.com       (HR)");
   console.log("   juan@upca.com      (EMPLOYEE)");
