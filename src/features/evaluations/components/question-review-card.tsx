@@ -35,20 +35,24 @@ function RatingSelector({
     <div className="flex flex-col gap-1">
       <span className="text-xs text-muted-foreground">{label}</span>
       <div className="flex gap-1">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <button
-            key={star}
-            type="button"
-            onClick={() => onChange(star)}
-            className={`h-7 w-7 rounded-md text-sm font-medium transition-colors ${
-              value && value >= star
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted hover:bg-muted-foreground/20"
-            }`}
-          >
-            {star}
-          </button>
-        ))}
+        {[1, 2, 3, 4, 5].map((star) => {
+          const selected = value === star;
+          return (
+            <button
+              key={star}
+              type="button"
+              aria-pressed={selected}
+              onClick={() => onChange(star)}
+              className={`h-7 w-7 rounded-md text-sm font-medium transition-colors ${
+                selected
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted hover:bg-muted-foreground/20"
+              }`}
+            >
+              {star}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
