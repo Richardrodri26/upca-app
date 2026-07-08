@@ -16,7 +16,7 @@ import {
 import { AssignmentStatusBadge } from "@/features/assignments/components/assignment-status-badge";
 import { useSession } from "@/features/auth/hooks/use-session";
 import { useEvaluationResults } from "@/features/results/queries";
-import { buildResultsCsv } from "@/features/results/utils/export-csv";
+import { downloadResultsXlsx } from "@/features/results/utils/export-xlsx";
 import { metricColor } from "@/features/results/utils/iap";
 
 export default function EvaluationResultsPage({
@@ -65,14 +65,7 @@ export default function EvaluationResultsPage({
 
   const handleExport = () => {
     if (!results) return;
-    const csv = buildResultsCsv(results);
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `resultados-${results.evaluation.title.replace(/[^\w\dáéíóúñ-]+/gi, "-").toLowerCase()}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+    downloadResultsXlsx(results);
   };
 
   return (
@@ -90,9 +83,9 @@ export default function EvaluationResultsPage({
           variant="outline"
           onClick={handleExport}
           disabled={!results}
-          title="Exportar Resultados"
+          title="Exportar a Excel"
         >
-          Exportar Resultados
+          Exportar a Excel
         </Button>
       </div>
 
