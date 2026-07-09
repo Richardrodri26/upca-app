@@ -37,7 +37,7 @@ export function ReviewSummaryBar({
     totalQuestions > 0 ? (reviewedCount / totalQuestions) * 100 : 0;
 
   return (
-    <div className="sticky top-0 z-10 bg-background border-b pb-4 -mx-6 px-6 pt-4">
+    <div className="sticky top-0 z-10 bg-background border-b pb-4 -mx-4 px-4 pt-4 sm:-mx-6 sm:px-6">
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-xl font-bold tracking-tight">
