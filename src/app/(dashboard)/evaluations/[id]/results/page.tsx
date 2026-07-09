@@ -70,7 +70,7 @@ export default function EvaluationResultsPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">
             {results.evaluation.title}
@@ -84,6 +84,7 @@ export default function EvaluationResultsPage({
           onClick={handleExport}
           disabled={!results}
           title="Exportar a Excel"
+          className="self-start sm:self-auto"
         >
           Exportar a Excel
         </Button>
