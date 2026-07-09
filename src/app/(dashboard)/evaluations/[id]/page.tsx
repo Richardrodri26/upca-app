@@ -63,9 +63,9 @@ export default function EvaluationDetailPage({
   return (
     <div className="flex flex-col gap-6">
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col items-start gap-4 sm:flex-row sm:justify-between">
         <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <h1 className="text-2xl font-bold tracking-tight">
               {evaluation.title}
             </h1>
@@ -76,7 +76,7 @@ export default function EvaluationDetailPage({
           </p>
         </div>
 
-        <div className="flex gap-2 shrink-0">
+        <div className="flex flex-wrap gap-2 shrink-0">
           {evaluation.status === "ACTIVE" && (
             <Button
               variant="destructive"

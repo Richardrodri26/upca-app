@@ -38,14 +38,14 @@ export function ReviewSummaryBar({
 
   return (
     <div className="sticky top-0 z-10 bg-background border-b pb-4 -mx-4 px-4 pt-4 sm:-mx-6 sm:px-6">
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-xl font-bold tracking-tight">
             {evaluationTitle}
           </h1>
           <p className="text-sm text-muted-foreground">{positionName}</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <EvaluationStatusBadge status={status} />
           {status === "REVIEW" && (
             <Button
@@ -81,7 +81,7 @@ export function ReviewSummaryBar({
 
       {/* Average ratings */}
       {averageRatings && (
-        <div className="flex gap-6 mt-3 text-sm">
+        <div className="flex flex-wrap gap-x-6 gap-y-2 mt-3 text-sm">
           <span>
             <span className="text-muted-foreground">Pertinencia: </span>
             <span className="font-medium tabular-nums">

@@ -89,9 +89,9 @@ export function QuestionReviewCard({
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-start justify-between pb-2">
+      <CardHeader className="flex flex-col gap-3 pb-2 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex flex-col gap-1.5">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <span className="text-sm font-bold text-muted-foreground tabular-nums">
               {question.order}.
             </span>
@@ -108,7 +108,7 @@ export function QuestionReviewCard({
             </span>
           )}
         </div>
-        <div className="flex gap-1">
+        <div className="flex flex-wrap gap-1">
           {question.status !== "APPROVED" && (
             <Button
               variant="outline"

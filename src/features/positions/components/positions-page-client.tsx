@@ -127,12 +127,12 @@ export function PositionsPageClient({
       </div>
 
       {/* Filters — 100% synced to URL via nuqs */}
-      <div className="flex gap-4">
+      <div className="flex flex-wrap gap-4">
         <Input
           placeholder="Buscar por nombre..."
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
-          className="max-w-sm"
+          className="w-full sm:max-w-sm"
         />
         <Select
           value={department}
@@ -140,7 +140,7 @@ export function PositionsPageClient({
             if (v) setDepartment(v);
           }}
         >
-          <SelectTrigger className="w-48">
+          <SelectTrigger className="w-full sm:w-48">
             <SelectValue placeholder="Departamento" />
           </SelectTrigger>
           <SelectContent>

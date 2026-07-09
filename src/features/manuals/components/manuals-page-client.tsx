@@ -63,12 +63,12 @@ export function ManualsPageClient({ initialManuals }: ManualsPageClientProps) {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-bold tracking-tight">
           Manuales de Funciones
         </h1>
         {canModify && (
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button
               variant="outline"
               onClick={() => syncMutation.mutate()}
@@ -85,14 +85,14 @@ export function ManualsPageClient({ initialManuals }: ManualsPageClientProps) {
         )}
       </div>
 
-      <div className="flex gap-4">
+      <div className="flex flex-wrap gap-4">
         <Select
           value={status}
           onValueChange={(v) => {
             if (v) setStatus(v);
           }}
         >
-          <SelectTrigger className="w-48">
+          <SelectTrigger className="w-full sm:w-48">
             <SelectValue placeholder="Estado" />
           </SelectTrigger>
           <SelectContent>

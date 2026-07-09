@@ -58,9 +58,9 @@ export default function EvaluationsPage() {
         </Link>
       </div>
 
-      <div className="flex gap-4">
+      <div className="flex flex-wrap gap-4">
         <Select value={status} onValueChange={(v) => v && setStatus(v)}>
-          <SelectTrigger className="w-48">
+          <SelectTrigger className="w-full sm:w-48">
             <SelectValue placeholder="Estado" />
           </SelectTrigger>
           <SelectContent>
