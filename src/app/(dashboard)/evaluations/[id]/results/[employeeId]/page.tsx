@@ -102,7 +102,9 @@ export default function EmployeeResultsPage({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-10">#</TableHead>
+                <TableHead className="w-10" sticky>
+                  #
+                </TableHead>
                 <TableHead>Pregunta</TableHead>
                 <TableHead className="w-24 text-center">Respuesta</TableHead>
                 <TableHead className="w-24 text-center">
@@ -119,10 +121,15 @@ export default function EmployeeResultsPage({
 
                 return (
                   <TableRow key={q.id}>
-                    <TableCell className="text-muted-foreground font-bold">
+                    <TableCell
+                      className="text-muted-foreground font-bold"
+                      sticky
+                    >
                       {q.order}
                     </TableCell>
-                    <TableCell className="text-sm">{q.text}</TableCell>
+                    <TableCell className="text-sm whitespace-normal min-w-52">
+                      {q.text}
+                    </TableCell>
                     <TableCell className="text-center">
                       {q.employeeResponse != null ? (
                         <span

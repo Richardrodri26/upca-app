@@ -90,7 +90,7 @@ export default function AssignmentsPage({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Empleado evaluado</TableHead>
+                  <TableHead sticky>Empleado evaluado</TableHead>
                   <TableHead>Evaluador</TableHead>
                   <TableHead>Estado</TableHead>
                   <TableHead>Puntaje</TableHead>
@@ -99,7 +99,7 @@ export default function AssignmentsPage({
               <TableBody>
                 {assignments.map((a) => (
                   <TableRow key={a.id}>
-                    <TableCell>
+                    <TableCell sticky>
                       <div className="font-medium">{a.employee.name}</div>
                       <div className="text-xs text-muted-foreground">
                         {a.employee.email}

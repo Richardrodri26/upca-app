@@ -88,54 +88,100 @@ export default function EvaluationsPage() {
           </Link>
         </div>
       ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Título</TableHead>
-              <TableHead>Cargo</TableHead>
-              <TableHead>Estado</TableHead>
-              <TableHead>Preguntas</TableHead>
-              <TableHead className="w-32">Acciones</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+        <>
+          {/* Desktop / tablet: full table with sticky first column */}
+          <div className="hidden md:block">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead sticky>Título</TableHead>
+                  <TableHead>Cargo</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead>Preguntas</TableHead>
+                  <TableHead className="w-32">Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {evaluations.map((eval_) => (
+                  <TableRow key={eval_.id}>
+                    <TableCell className="font-medium" sticky>
+                      {eval_.title}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {eval_.position?.name ?? "—"}
+                    </TableCell>
+                    <TableCell>
+                      <EvaluationStatusBadge status={eval_.status} />
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {eval_._count?.questions ?? "—"}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        {eval_.status === "REVIEW" && (
+                          <Link
+                            href={`/evaluations/${eval_.id}/review`}
+                            className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground h-9 px-3"
+                          >
+                            Revisar
+                          </Link>
+                        )}
+                        {(eval_.status === "ACTIVE" ||
+                          eval_.status === "CLOSED") && (
+                          <Link
+                            href={`/evaluations/${eval_.id}`}
+                            className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground h-9 px-3"
+                          >
+                            Ver
+                          </Link>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* Mobile: card list fallback */}
+          <div className="flex flex-col gap-3 md:hidden">
             {evaluations.map((eval_) => (
-              <TableRow key={eval_.id}>
-                <TableCell className="font-medium">{eval_.title}</TableCell>
-                <TableCell className="text-muted-foreground">
-                  {eval_.position?.name ?? "—"}
-                </TableCell>
-                <TableCell>
+              <div
+                key={eval_.id}
+                className="rounded-lg border p-4 flex flex-col gap-2"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <span className="font-medium">{eval_.title}</span>
                   <EvaluationStatusBadge status={eval_.status} />
-                </TableCell>
-                <TableCell className="text-muted-foreground">
-                  {eval_._count?.questions ?? "—"}
-                </TableCell>
-                <TableCell>
-                  <div className="flex gap-1">
-                    {eval_.status === "REVIEW" && (
-                      <Link
-                        href={`/evaluations/${eval_.id}/review`}
-                        className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground h-9 px-3"
-                      >
-                        Revisar
-                      </Link>
-                    )}
-                    {(eval_.status === "ACTIVE" ||
-                      eval_.status === "CLOSED") && (
-                      <Link
-                        href={`/evaluations/${eval_.id}`}
-                        className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground h-9 px-3"
-                      >
-                        Ver
-                      </Link>
-                    )}
-                  </div>
-                </TableCell>
-              </TableRow>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {eval_.position?.name ?? "—"}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {eval_._count?.questions ?? "—"} preguntas
+                </p>
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {eval_.status === "REVIEW" && (
+                    <Link
+                      href={`/evaluations/${eval_.id}/review`}
+                      className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium border hover:bg-accent hover:text-accent-foreground h-9 px-3"
+                    >
+                      Revisar
+                    </Link>
+                  )}
+                  {(eval_.status === "ACTIVE" || eval_.status === "CLOSED") && (
+                    <Link
+                      href={`/evaluations/${eval_.id}`}
+                      className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium border hover:bg-accent hover:text-accent-foreground h-9 px-3"
+                    >
+                      Ver
+                    </Link>
+                  )}
+                </div>
+              </div>
             ))}
-          </TableBody>
-        </Table>
+          </div>
+        </>
       )}
     </div>
   );

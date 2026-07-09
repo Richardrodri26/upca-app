@@ -172,7 +172,7 @@ export default function EvaluationResultsPage({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Empleado</TableHead>
+                  <TableHead sticky>Empleado</TableHead>
                   <TableHead>Estado</TableHead>
                   <TableHead>Puntaje</TableHead>
                   <TableHead>Completado</TableHead>
@@ -181,7 +181,7 @@ export default function EvaluationResultsPage({
               <TableBody>
                 {results.assignments.map((a) => (
                   <TableRow key={a.id}>
-                    <TableCell className="font-medium">
+                    <TableCell className="font-medium" sticky>
                       <Link
                         href={`/evaluations/${id}/results/${a.employee.id}`}
                         className="hover:underline"

@@ -158,60 +158,127 @@ export function PositionsTable({
   });
 
   return (
-    <Table>
-      <TableHeader>
-        {table.getHeaderGroups().map((headerGroup) => (
-          <TableRow key={headerGroup.id}>
-            {headerGroup.headers.map((header) => (
-              <TableHead key={header.id} colSpan={header.colSpan}>
-                {header.isPlaceholder ? null : (
-                  <button
-                    type="button"
-                    className={
-                      header.column.getCanSort()
-                        ? "cursor-pointer select-none flex items-center gap-1"
-                        : ""
-                    }
-                    onClick={header.column.getToggleSortingHandler()}
+    <>
+      {/* Desktop / tablet: full table with sticky first column */}
+      <div className="hidden md:block">
+        <Table>
+          <TableHeader>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header, index) => (
+                  <TableHead
+                    key={header.id}
+                    colSpan={header.colSpan}
+                    sticky={index === 0}
                   >
-                    {flexRender(
-                      header.column.columnDef.header,
-                      header.getContext(),
+                    {header.isPlaceholder ? null : (
+                      <button
+                        type="button"
+                        className={
+                          header.column.getCanSort()
+                            ? "cursor-pointer select-none flex items-center gap-1"
+                            : ""
+                        }
+                        onClick={header.column.getToggleSortingHandler()}
+                      >
+                        {flexRender(
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
+                        {header.column.getIsSorted() === "asc"
+                          ? " ▲"
+                          : header.column.getIsSorted() === "desc"
+                            ? " ▼"
+                            : ""}
+                      </button>
                     )}
-                    {header.column.getIsSorted() === "asc"
-                      ? " ▲"
-                      : header.column.getIsSorted() === "desc"
-                        ? " ▼"
-                        : ""}
-                  </button>
-                )}
-              </TableHead>
+                  </TableHead>
+                ))}
+              </TableRow>
             ))}
-          </TableRow>
-        ))}
-      </TableHeader>
-      <TableBody>
-        {table.getRowModel().rows.length === 0 ? (
-          <TableRow>
-            <TableCell
-              colSpan={columns.length}
-              className="text-center text-muted-foreground py-8"
-            >
-              No se encontraron cargos
-            </TableCell>
-          </TableRow>
-        ) : (
-          table.getRowModel().rows.map((row) => (
-            <TableRow key={row.id}>
-              {row.getVisibleCells().map((cell) => (
-                <TableCell key={cell.id}>
-                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+          </TableHeader>
+          <TableBody>
+            {table.getRowModel().rows.length === 0 ? (
+              <TableRow>
+                <TableCell
+                  colSpan={columns.length}
+                  className="text-center text-muted-foreground py-8"
+                >
+                  No se encontraron cargos
                 </TableCell>
-              ))}
-            </TableRow>
+              </TableRow>
+            ) : (
+              table.getRowModel().rows.map((row) => (
+                <TableRow key={row.id}>
+                  {row.getVisibleCells().map((cell, index) => (
+                    <TableCell key={cell.id} sticky={index === 0}>
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      )}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      {/* Mobile: card list fallback */}
+      <div className="flex flex-col gap-3 md:hidden">
+        {data.length === 0 ? (
+          <p className="text-center text-muted-foreground py-8">
+            No se encontraron cargos
+          </p>
+        ) : (
+          data.map((position) => (
+            <div
+              key={position.id}
+              className="rounded-lg border p-4 flex flex-col gap-2"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <button
+                  type="button"
+                  className="text-left font-medium hover:underline"
+                  onClick={() => onView(position.id)}
+                >
+                  {position.name}
+                </button>
+                {position.manual ? (
+                  statusBadge(position.manual.status)
+                ) : (
+                  <Badge variant="outline">Sin manual</Badge>
+                )}
+              </div>
+              <p className="text-sm text-muted-foreground">
+                {position.department ?? "—"}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {position.evaluations.length} evaluaciones
+              </p>
+              {canModify && (
+                <div className="flex flex-wrap gap-2 pt-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onEdit(position)}
+                  >
+                    Editar
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onDelete(position.id)}
+                  >
+                    Eliminar
+                  </Button>
+                </div>
+              )}
+            </div>
           ))
         )}
-      </TableBody>
-    </Table>
+      </div>
+    </>
   );
 }
