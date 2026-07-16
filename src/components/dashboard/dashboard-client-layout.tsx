@@ -31,7 +31,9 @@ export function DashboardClientLayout({
           <Separator orientation="vertical" className="h-6" />
           <span className="text-sm font-medium">UPCA</span>
         </header>
-        <main className="flex-1 p-4 sm:p-6">{children}</main>
+        <main className="mx-auto max-w-screen-2xl flex-1 p-4 sm:p-6">
+          {children}
+        </main>
       </SidebarInset>
     </SidebarProvider>
   );

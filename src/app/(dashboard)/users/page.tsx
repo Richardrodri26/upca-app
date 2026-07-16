@@ -11,6 +11,7 @@ import {
 } from "@tanstack/react-table";
 import { useMemo, useState } from "react";
 import { FieldError } from "@/components/atoms/field-error";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -136,7 +137,7 @@ export default function UsersPage() {
                 if (v) handleRoleChange(row.id, v as UserRole);
               }}
             >
-              <SelectTrigger className="w-40">
+              <SelectTrigger className="w-full sm:w-40">
                 <SelectValue>{ROLE_LABELS[row.role]}</SelectValue>
               </SelectTrigger>
               <SelectContent>
@@ -325,68 +326,113 @@ export default function UsersPage() {
       {isLoading ? (
         <p className="text-muted-foreground">Cargando usuarios...</p>
       ) : (
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header, index) => (
-                  <TableHead
-                    key={header.id}
-                    colSpan={header.colSpan}
-                    sticky={index === 0}
-                  >
-                    {header.isPlaceholder ? null : (
-                      <button
-                        type="button"
-                        className={
-                          header.column.getCanSort()
-                            ? "cursor-pointer select-none flex items-center gap-1"
-                            : ""
-                        }
-                        onClick={header.column.getToggleSortingHandler()}
+        <>
+          <div className="hidden md:block">
+            <Table>
+              <TableHeader>
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <TableRow key={headerGroup.id}>
+                    {headerGroup.headers.map((header, index) => (
+                      <TableHead
+                        key={header.id}
+                        colSpan={header.colSpan}
+                        sticky={index === 0}
                       >
-                        {flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
+                        {header.isPlaceholder ? null : (
+                          <button
+                            type="button"
+                            className={
+                              header.column.getCanSort()
+                                ? "cursor-pointer select-none flex items-center gap-1"
+                                : ""
+                            }
+                            onClick={header.column.getToggleSortingHandler()}
+                          >
+                            {flexRender(
+                              header.column.columnDef.header,
+                              header.getContext(),
+                            )}
+                            {header.column.getIsSorted() === "asc"
+                              ? " ▲"
+                              : header.column.getIsSorted() === "desc"
+                                ? " ▼"
+                                : ""}
+                          </button>
                         )}
-                        {header.column.getIsSorted() === "asc"
-                          ? " ▲"
-                          : header.column.getIsSorted() === "desc"
-                            ? " ▼"
-                            : ""}
-                      </button>
-                    )}
-                  </TableHead>
+                      </TableHead>
+                    ))}
+                  </TableRow>
                 ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="text-center text-muted-foreground py-8"
-                >
-                  No se encontraron usuarios
-                </TableCell>
-              </TableRow>
-            ) : (
-              table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell, index) => (
-                    <TableCell key={cell.id} sticky={index === 0}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
+              </TableHeader>
+              <TableBody>
+                {table.getRowModel().rows.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={columns.length}
+                      className="text-center text-muted-foreground py-8"
+                    >
+                      No se encontraron usuarios
                     </TableCell>
-                  ))}
-                </TableRow>
+                  </TableRow>
+                ) : (
+                  table.getRowModel().rows.map((row) => (
+                    <TableRow key={row.id}>
+                      {row.getVisibleCells().map((cell, index) => (
+                        <TableCell key={cell.id} sticky={index === 0}>
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext(),
+                          )}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+
+          <div className="flex flex-col gap-3 md:hidden">
+            {users.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">
+                No se encontraron usuarios
+              </p>
+            ) : (
+              users.map((user) => (
+                <div
+                  key={user.id}
+                  className="rounded-lg border p-4 flex flex-col gap-2"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="font-medium">{user.name}</span>
+                    <Badge variant="outline">{ROLE_LABELS[user.role]}</Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground">{user.email}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {user.createdAt.toLocaleDateString("es-ES")}
+                  </p>
+                  <Select
+                    value={user.role}
+                    onValueChange={(v) => {
+                      if (v) handleRoleChange(user.id, v as UserRole);
+                    }}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue>{ROLE_LABELS[user.role]}</SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {USER_ROLES.map((r) => (
+                        <SelectItem key={r} value={r}>
+                          {ROLE_LABELS[r]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               ))
             )}
-          </TableBody>
-        </Table>
+          </div>
+        </>
       )}
     </div>
   );

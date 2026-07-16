@@ -136,64 +136,105 @@ export function ManualsTable({ data, canModify, onDelete }: ManualsTableProps) {
   });
 
   return (
-    <Table>
-      <TableHeader>
-        {table.getHeaderGroups().map((headerGroup) => (
-          <TableRow key={headerGroup.id}>
-            {headerGroup.headers.map((header, index) => (
-              <TableHead
-                key={header.id}
-                colSpan={header.colSpan}
-                sticky={index === 0}
-              >
-                {header.isPlaceholder ? null : (
-                  <button
-                    type="button"
-                    className={
-                      header.column.getCanSort()
-                        ? "cursor-pointer select-none flex items-center gap-1"
-                        : ""
-                    }
-                    onClick={header.column.getToggleSortingHandler()}
+    <>
+      <div className="hidden md:block">
+        <Table>
+          <TableHeader>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header, index) => (
+                  <TableHead
+                    key={header.id}
+                    colSpan={header.colSpan}
+                    sticky={index === 0}
                   >
-                    {flexRender(
-                      header.column.columnDef.header,
-                      header.getContext(),
+                    {header.isPlaceholder ? null : (
+                      <button
+                        type="button"
+                        className={
+                          header.column.getCanSort()
+                            ? "cursor-pointer select-none flex items-center gap-1"
+                            : ""
+                        }
+                        onClick={header.column.getToggleSortingHandler()}
+                      >
+                        {flexRender(
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
+                        {header.column.getIsSorted() === "asc"
+                          ? " ▲"
+                          : header.column.getIsSorted() === "desc"
+                            ? " ▼"
+                            : ""}
+                      </button>
                     )}
-                    {header.column.getIsSorted() === "asc"
-                      ? " ▲"
-                      : header.column.getIsSorted() === "desc"
-                        ? " ▼"
-                        : ""}
-                  </button>
-                )}
-              </TableHead>
+                  </TableHead>
+                ))}
+              </TableRow>
             ))}
-          </TableRow>
-        ))}
-      </TableHeader>
-      <TableBody>
-        {table.getRowModel().rows.length === 0 ? (
-          <TableRow>
-            <TableCell
-              colSpan={columns.length}
-              className="text-center text-muted-foreground py-8"
-            >
-              No se encontraron manuales
-            </TableCell>
-          </TableRow>
-        ) : (
-          table.getRowModel().rows.map((row) => (
-            <TableRow key={row.id}>
-              {row.getVisibleCells().map((cell, index) => (
-                <TableCell key={cell.id} sticky={index === 0}>
-                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+          </TableHeader>
+          <TableBody>
+            {table.getRowModel().rows.length === 0 ? (
+              <TableRow>
+                <TableCell
+                  colSpan={columns.length}
+                  className="text-center text-muted-foreground py-8"
+                >
+                  No se encontraron manuales
                 </TableCell>
-              ))}
-            </TableRow>
+              </TableRow>
+            ) : (
+              table.getRowModel().rows.map((row) => (
+                <TableRow key={row.id}>
+                  {row.getVisibleCells().map((cell, index) => (
+                    <TableCell key={cell.id} sticky={index === 0}>
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      )}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      <div className="flex flex-col gap-3 md:hidden">
+        {data.length === 0 ? (
+          <p className="text-center text-muted-foreground py-8">
+            No se encontraron manuales
+          </p>
+        ) : (
+          data.map((manual) => (
+            <div
+              key={manual.id}
+              className="rounded-lg border p-4 flex flex-col gap-2"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <span className="font-medium break-all">{manual.fileName}</span>
+                <ManualStatusBadge status={manual.status} />
+              </div>
+              <p className="text-sm text-muted-foreground">
+                {manual.position.name}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {manual.uploadedBy.name}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {manual.createdAt.toLocaleDateString("es-ES")}
+              </p>
+              {canModify && (
+                <div className="flex flex-wrap gap-2 pt-1">
+                  <DeleteButton id={manual.id} onDelete={onDelete} />
+                </div>
+              )}
+            </div>
           ))
         )}
-      </TableBody>
-    </Table>
+      </div>
+    </>
   );
 }

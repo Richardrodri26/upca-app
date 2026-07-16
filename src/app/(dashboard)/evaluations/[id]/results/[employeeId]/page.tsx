@@ -127,7 +127,7 @@ export default function EmployeeResultsPage({
                     >
                       {q.order}
                     </TableCell>
-                    <TableCell className="text-sm whitespace-normal min-w-52">
+                    <TableCell className="text-sm whitespace-normal min-w-40 sm:min-w-52">
                       {q.text}
                     </TableCell>
                     <TableCell className="text-center">
