@@ -2,7 +2,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 
-type Role = "ADMIN" | "HR" | "EMPLOYEE";
+type Role = "ADMIN" | "HR" | "AREA_LEAD" | "EMPLOYEE";
 
 /**
  * Require a valid session and optionally check for specific roles.

@@ -4,9 +4,27 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
+import type {
+  ConsensusInput,
+  ReviewQuestionInput,
+} from "@/features/evaluations/validators";
 import type { QuestionStatus } from "@/generated/prisma/client";
-import type { RateQuestionInput } from "@/lib/validators/evaluation";
+import { cn } from "@/lib/utils";
 import { QuestionStatusBadge } from "./evaluation-status-badge";
+
+type Review = {
+  reviewerRole: "HR" | "AREA_LEAD";
+  reviewerId: string;
+  relevanceRating: number;
+  coherenceRating: number;
+  adequacyRating: number;
+};
+
+type Consensus = {
+  relevanceRating: number;
+  coherenceRating: number;
+  adequacyRating: number;
+};
 
 type QuestionData = {
   id: string;
@@ -17,9 +35,9 @@ type QuestionData = {
   pillar: string | null;
   manualReference: string | null;
   scoringGuide: string | null;
-  relevanceRating: number | null;
-  coherenceRating: number | null;
-  adequacyRating: number | null;
+  reviews: Review[];
+  consensus: Consensus | null;
+  calibrationStatus: "PENDING" | "IN_CALIBRATION" | "RESOLVED";
 };
 
 function RatingSelector({
@@ -43,11 +61,12 @@ function RatingSelector({
               type="button"
               aria-pressed={selected}
               onClick={() => onChange(star)}
-              className={`h-7 w-7 rounded-md text-sm font-medium transition-colors ${
+              className={cn(
+                "h-7 w-7 rounded-md text-sm font-medium transition-colors",
                 selected
                   ? "bg-primary text-primary-foreground"
-                  : "bg-muted hover:bg-muted-foreground/20"
-              }`}
+                  : "bg-muted hover:bg-muted-foreground/20",
+              )}
             >
               {star}
             </button>
@@ -58,27 +77,164 @@ function RatingSelector({
   );
 }
 
+function RatingRead({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="flex flex-col gap-1">
+      <span className="text-xs text-muted-foreground">{label}</span>
+      <div className="flex gap-1">
+        {[1, 2, 3, 4, 5].map((star) => {
+          const selected = value === star;
+          return (
+            <span
+              key={star}
+              className={cn(
+                "h-7 w-7 rounded-md text-sm font-medium flex items-center justify-center",
+                selected
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted/60 text-muted-foreground",
+              )}
+            >
+              {star}
+            </span>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+type ReviewerPanelProps = {
+  title: string;
+  review: Review | undefined;
+  editable: boolean;
+  onSubmit: (ratings: ReviewQuestionInput) => void;
+};
+
+function ReviewerPanel({
+  title,
+  review,
+  editable,
+  onSubmit,
+}: ReviewerPanelProps) {
+  const [relevance, setRelevance] = useState<number | null>(
+    review?.relevanceRating ?? null,
+  );
+  const [coherence, setCoherence] = useState<number | null>(
+    review?.coherenceRating ?? null,
+  );
+  const [adequacy, setAdequacy] = useState<number | null>(
+    review?.adequacyRating ?? null,
+  );
+
+  const canSubmit =
+    relevance !== null && coherence !== null && adequacy !== null;
+
+  const handleSubmit = () => {
+    if (!canSubmit) return;
+    onSubmit({
+      relevanceRating: relevance,
+      coherenceRating: coherence,
+      adequacyRating: adequacy,
+    });
+  };
+
+  return (
+    <div className="flex flex-col gap-2 rounded-md border p-3">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          {title}
+        </span>
+        {review ? (
+          <span className="text-xs text-muted-foreground">Completada</span>
+        ) : editable ? (
+          <span className="text-xs text-muted-foreground">Tu revisión</span>
+        ) : (
+          <span className="text-xs text-muted-foreground">Pendiente</span>
+        )}
+      </div>
+
+      {editable ? (
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-wrap gap-4">
+            <RatingSelector
+              label="Pertinencia"
+              value={relevance}
+              onChange={setRelevance}
+            />
+            <RatingSelector
+              label="Coherencia"
+              value={coherence}
+              onChange={setCoherence}
+            />
+            <RatingSelector
+              label="Adecuación"
+              value={adequacy}
+              onChange={setAdequacy}
+            />
+          </div>
+          <Button
+            type="button"
+            size="sm"
+            className="self-start"
+            disabled={!canSubmit}
+            onClick={handleSubmit}
+          >
+            {review ? "Actualizar revisión" : "Enviar revisión"}
+          </Button>
+        </div>
+      ) : review ? (
+        <div className="flex flex-wrap gap-4">
+          <RatingRead label="Pertinencia" value={review.relevanceRating} />
+          <RatingRead label="Coherencia" value={review.coherenceRating} />
+          <RatingRead label="Adecuación" value={review.adequacyRating} />
+        </div>
+      ) : (
+        <p className="text-xs text-muted-foreground">Pendiente</p>
+      )}
+    </div>
+  );
+}
+
 type QuestionReviewCardProps = {
   question: QuestionData;
+  reviewerRole: "HR" | "AREA_LEAD";
   onApprove: (id: string) => void;
   onReject: (id: string) => void;
   onUpdateText: (id: string, text: string) => void;
-  onRate: (id: string, ratings: RateQuestionInput) => void;
+  onSubmitReview: (id: string, ratings: ReviewQuestionInput) => void;
+  onResolveCalibration?: (id: string, final: ConsensusInput) => void;
 };
 
 export function QuestionReviewCard({
   question,
+  reviewerRole,
   onApprove,
   onReject,
   onUpdateText,
-  onRate,
+  onSubmitReview,
+  onResolveCalibration,
 }: QuestionReviewCardProps) {
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState(question.text);
   const [showOriginal, setShowOriginal] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
 
+  const [calRelevance, setCalRelevance] = useState<number | null>(
+    question.consensus?.relevanceRating ?? null,
+  );
+  const [calCoherence, setCalCoherence] = useState<number | null>(
+    question.consensus?.coherenceRating ?? null,
+  );
+  const [calAdequacy, setCalAdequacy] = useState<number | null>(
+    question.consensus?.adequacyRating ?? null,
+  );
+
   const hasOriginal = question.originalText && question.status === "EDITED";
+
+  const hrReview = question.reviews.find((r) => r.reviewerRole === "HR");
+  const leadReview = question.reviews.find(
+    (r) => r.reviewerRole === "AREA_LEAD",
+  );
 
   const handleSaveEdit = () => {
     if (editText.trim().length >= 10 && editText !== question.text) {
@@ -86,6 +242,29 @@ export function QuestionReviewCard({
     }
     setEditing(false);
   };
+
+  const handleSubmitReview = (ratings: ReviewQuestionInput) => {
+    onSubmitReview(question.id, ratings);
+  };
+
+  const handleResolveCalibration = () => {
+    if (
+      calRelevance === null ||
+      calCoherence === null ||
+      calAdequacy === null ||
+      !onResolveCalibration
+    ) {
+      return;
+    }
+    onResolveCalibration(question.id, {
+      relevanceRating: calRelevance,
+      coherenceRating: calCoherence,
+      adequacyRating: calAdequacy,
+    });
+  };
+
+  const canResolveCalibration =
+    calRelevance !== null && calCoherence !== null && calAdequacy !== null;
 
   return (
     <Card>
@@ -99,6 +278,16 @@ export function QuestionReviewCard({
             {question.pillar && (
               <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
                 {question.pillar}
+              </span>
+            )}
+            {question.calibrationStatus === "IN_CALIBRATION" && (
+              <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-medium text-amber-600">
+                Calibración
+              </span>
+            )}
+            {question.calibrationStatus === "RESOLVED" && (
+              <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-medium text-emerald-600">
+                Consenso
               </span>
             )}
           </div>
@@ -205,23 +394,94 @@ export function QuestionReviewCard({
           </div>
         )}
 
-        {/* IAP Ratings */}
-        <div className="flex flex-wrap gap-6 border-t pt-3">
-          <RatingSelector
-            label="Pertinencia"
-            value={question.relevanceRating}
-            onChange={(v) => onRate(question.id, { relevanceRating: v })}
-          />
-          <RatingSelector
-            label="Coherencia"
-            value={question.coherenceRating}
-            onChange={(v) => onRate(question.id, { coherenceRating: v })}
-          />
-          <RatingSelector
-            label="Adecuación"
-            value={question.adequacyRating}
-            onChange={(v) => onRate(question.id, { adequacyRating: v })}
-          />
+        {/* Revisiones (doble revisor) */}
+        <div className="flex flex-col gap-3 border-t pt-3">
+          <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Revisiones
+          </span>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <ReviewerPanel
+              title="Revisión RRHH"
+              review={hrReview}
+              editable={reviewerRole === "HR"}
+              onSubmit={handleSubmitReview}
+            />
+            <ReviewerPanel
+              title="Revisión Líder de Área"
+              review={leadReview}
+              editable={reviewerRole === "AREA_LEAD"}
+              onSubmit={handleSubmitReview}
+            />
+          </div>
+        </div>
+
+        {/* Calibración */}
+        <div className="flex flex-col gap-2 border-t pt-3">
+          {question.calibrationStatus === "PENDING" && (
+            <p className="text-xs text-muted-foreground">
+              Esperando ambas revisiones
+            </p>
+          )}
+
+          {question.calibrationStatus === "IN_CALIBRATION" && (
+            <div className="flex flex-col gap-3 rounded-md border border-amber-500/40 bg-amber-500/5 p-3">
+              <span className="text-xs font-medium text-amber-600">
+                Discrepancia detectada — requiere calibración
+              </span>
+              {onResolveCalibration && (
+                <div className="flex flex-col gap-3">
+                  <div className="flex flex-wrap gap-4">
+                    <RatingSelector
+                      label="Pertinencia"
+                      value={calRelevance}
+                      onChange={setCalRelevance}
+                    />
+                    <RatingSelector
+                      label="Coherencia"
+                      value={calCoherence}
+                      onChange={setCalCoherence}
+                    />
+                    <RatingSelector
+                      label="Adecuación"
+                      value={calAdequacy}
+                      onChange={setCalAdequacy}
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="self-start"
+                    disabled={!canResolveCalibration}
+                    onClick={handleResolveCalibration}
+                  >
+                    Confirmar consenso
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {question.calibrationStatus === "RESOLVED" && question.consensus && (
+            <div className="flex flex-col gap-2 rounded-md border border-emerald-500/40 bg-emerald-500/5 p-3">
+              <span className="text-xs font-semibold uppercase tracking-wide text-emerald-600">
+                Consenso
+              </span>
+              <div className="flex flex-wrap gap-4">
+                <RatingRead
+                  label="Pertinencia"
+                  value={question.consensus.relevanceRating}
+                />
+                <RatingRead
+                  label="Coherencia"
+                  value={question.consensus.coherenceRating}
+                />
+                <RatingRead
+                  label="Adecuación"
+                  value={question.consensus.adequacyRating}
+                />
+              </div>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

@@ -17,6 +17,7 @@ datasource db {
 enum Role {
   ADMIN
   HR
+  AREA_LEAD
   EMPLOYEE
 }
 
@@ -48,26 +49,40 @@ enum AssignmentStatus {
   COMPLETED
 }
 
+enum ReviewerRole {
+  HR
+  AREA_LEAD
+}
+
+enum CalibrationStatus {
+  PENDING
+  IN_CALIBRATION
+  RESOLVED
+}
+
 // ────────────────────────────────────
 // Auth Models (Better Auth)
 // ────────────────────────────────────
 
 model User {
-  id            String    @id @default(cuid())
+  id            String   @id @default(cuid())
   name          String
-  email         String    @unique
-  emailVerified Boolean   @default(false)
+  email         String   @unique
+  emailVerified Boolean  @default(false)
   image         String?
-  role          Role      @default(EMPLOYEE)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  role          Role     @default(EMPLOYEE)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  sessions              Session[]
-  accounts              Account[]
-  uploadedManuals       Manual[]               @relation("UploadedManuals")
-  createdEvaluations    Evaluation[]           @relation("CreatedEvaluations")
-  assignments           EvaluationAssignment[] @relation("EmployeeAssignments")
-  evaluatorAssignments  EvaluationAssignment[] @relation("EvaluatorAssignments")
+  sessions             Session[]
+  accounts             Account[]
+  uploadedManuals      Manual[]               @relation("UploadedManuals")
+  createdEvaluations   Evaluation[]           @relation("CreatedEvaluations")
+  assignments          EvaluationAssignment[] @relation("EmployeeAssignments")
+  evaluatorAssignments EvaluationAssignment[] @relation("EvaluatorAssignments")
+  ledPositions         Position[]             @relation("PositionLeader")
+  questionReviews      QuestionReview[]       @relation("QuestionReviews")
+  resolvedConsensuses  QuestionConsensus[]    @relation("ResolvedConsensuses")
 }
 
 model Session {
@@ -80,11 +95,11 @@ model Session {
   userAgent String?
   userId    String
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Account {
-  id                    String   @id @default(cuid())
+  id                    String    @id @default(cuid())
   accountId             String
   providerId            String
   userId                String
@@ -95,10 +110,10 @@ model Account {
   refreshTokenExpiresAt DateTime?
   scope                 String?
   password              String?
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
-  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Verification {
@@ -119,11 +134,13 @@ model Position {
   name        String   @unique
   description String?
   department  String?
+  leaderId    String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   manual      Manual?
   evaluations Evaluation[]
+  leader      User?        @relation("PositionLeader", fields: [leaderId], references: [id])
 }
 
 model Manual {
@@ -137,9 +154,9 @@ model Manual {
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
 
-  position     Position     @relation(fields: [positionId], references: [id], onDelete: Cascade)
-  uploadedBy   User         @relation("UploadedManuals", fields: [uploadedById], references: [id])
-  evaluations  Evaluation[]
+  position    Position     @relation(fields: [positionId], references: [id], onDelete: Cascade)
+  uploadedBy  User         @relation("UploadedManuals", fields: [uploadedById], references: [id])
+  evaluations Evaluation[]
 }
 
 model Evaluation {
@@ -153,31 +170,31 @@ model Evaluation {
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
 
-  position       Position         @relation(fields: [positionId], references: [id], onDelete: Cascade)
-  manual         Manual           @relation(fields: [manualId], references: [id])
-  createdBy      User             @relation("CreatedEvaluations", fields: [createdById], references: [id])
-  questions      Question[]
-  assignments    EvaluationAssignment[]
+  position    Position               @relation(fields: [positionId], references: [id], onDelete: Cascade)
+  manual      Manual                 @relation(fields: [manualId], references: [id])
+  createdBy   User                   @relation("CreatedEvaluations", fields: [createdById], references: [id])
+  questions   Question[]
+  assignments EvaluationAssignment[]
 }
 
 model Question {
-  id              String         @id @default(cuid())
-  text            String         @db.Text
-  order           Int
-  status          QuestionStatus @default(PENDING)
-  originalText    String?        @db.Text
-  pillar          String?
-  manualReference String?
-  scoringGuide    String?        @db.Text
-  relevanceRating Int?
-  coherenceRating Int?
-  adequacyRating  Int?
-  evaluationId    String
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
+  id                String            @id @default(cuid())
+  text              String            @db.Text
+  order             Int
+  status            QuestionStatus    @default(PENDING)
+  originalText      String?           @db.Text
+  pillar            String?
+  manualReference   String?
+  scoringGuide      String?           @db.Text
+  calibrationStatus CalibrationStatus @default(PENDING)
+  evaluationId      String
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
 
-  evaluation      Evaluation     @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
-  responses       Response[]
+  evaluation Evaluation         @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+  responses  Response[]
+  reviews    QuestionReview[]
+  consensus  QuestionConsensus?
 }
 
 model EvaluationAssignment {
@@ -191,23 +208,54 @@ model EvaluationAssignment {
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
 
-  evaluation   Evaluation       @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
-  employee     User             @relation("EmployeeAssignments", fields: [employeeId], references: [id])
-  evaluator    User             @relation("EvaluatorAssignments", fields: [evaluatorId], references: [id])
-  responses    Response[]
+  evaluation Evaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+  employee   User       @relation("EmployeeAssignments", fields: [employeeId], references: [id])
+  evaluator  User       @relation("EvaluatorAssignments", fields: [evaluatorId], references: [id])
+  responses  Response[]
 
   @@unique([evaluationId, employeeId])
 }
 
 model Response {
-  id           String               @id @default(cuid())
+  id           String   @id @default(cuid())
   value        Int
   questionId   String
   assignmentId String
-  createdAt    DateTime             @default(now())
+  createdAt    DateTime @default(now())
 
-  question     Question             @relation(fields: [questionId], references: [id], onDelete: Cascade)
-  assignment   EvaluationAssignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  question   Question             @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  assignment EvaluationAssignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
 
   @@unique([questionId, assignmentId])
+}
+
+model QuestionReview {
+  id              String       @id @default(cuid())
+  questionId      String
+  reviewerId      String
+  reviewerRole    ReviewerRole
+  relevanceRating Int
+  coherenceRating Int
+  adequacyRating  Int
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  reviewer User     @relation("QuestionReviews", fields: [reviewerId], references: [id])
+
+  @@unique([questionId, reviewerRole])
+  @@index([reviewerId])
+}
+
+model QuestionConsensus {
+  id              String   @id @default(cuid())
+  questionId      String   @unique
+  relevanceRating Int
+  coherenceRating Int
+  adequacyRating  Int
+  resolvedById    String
+  resolvedAt      DateTime @default(now())
+
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  resolvedBy User     @relation("ResolvedConsensuses", fields: [resolvedById], references: [id])
 }

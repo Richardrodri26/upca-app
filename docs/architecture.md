@@ -66,7 +66,8 @@ C4Context
     title Sistema UPCA App -- Diagrama de Contexto
 
     Person(admin, "Administrador", "Gestiona la organizacion, usuarios y configuracion general del sistema")
-    Person(hr, "Recursos Humanos", "Carga manuales, crea y asigna evaluaciones, revisa resultados")
+    Person(hr, "Recursos Humanos", "Carga manuales, crea y asigna evaluaciones, revisa y calibra resultados (primer revisor)")
+    Person(area_lead, "Jefe de Area", "Segundo revisor del esquema de calibracion IAP")
     Person(employee, "Empleado", "Completa las evaluaciones asignadas")
 
     System(upca, "UPCA App", "Aplicacion web Next.js que gestiona el ciclo de vida de evaluaciones de desempeno")
@@ -77,7 +78,8 @@ C4Context
     System_Ext(ollama, "Ollama (LLM)", "Modelo de lenguaje local para generacion de preguntas")
 
     Rel(admin, upca, "Administra usuarios y organizacion", "HTTPS")
-    Rel(hr, upca, "Gestiona manuales y evaluaciones", "HTTPS")
+    Rel(hr, upca, "Gestiona manuales, evaluaciones y calibracion", "HTTPS")
+    Rel(area_lead, upca, "Revisa y calibra preguntas IAP de sus cargos", "HTTPS")
     Rel(employee, upca, "Completa evaluaciones", "HTTPS")
 
     Rel(upca, postgres, "Lee y escribe datos", "Prisma / TCP")
@@ -258,15 +260,18 @@ La autenticacion se implementa con **Better Auth** utilizando el **Prisma adapte
 
 ### 5.3 Roles
 
-El sistema define tres roles mediante un campo `role` en el modelo `User`. No se utiliza el plugin RBAC de Better Auth.
+El sistema define cuatro roles mediante un campo `role` en el modelo `User`. No se utiliza el plugin RBAC de Better Auth.
 
 | Rol | Descripcion |
 |-----|-------------|
 | `ADMIN` | Administrador del sistema. Gestiona la organizacion, usuarios y configuracion global. |
-| `HR` | Recursos Humanos. Carga manuales de funciones, crea evaluaciones, asigna evaluaciones a empleados y revisa resultados. |
+| `HR` | Recursos Humanos. Carga manuales de funciones, crea evaluaciones, asigna evaluaciones a empleados y revisa resultados. Actua como primer revisor en el esquema de calibracion de dos revisores. |
+| `AREA_LEAD` | Jefe de area. Segundo revisor del esquema de calibracion. Se vincula a un `Position` mediante `leaderId` y solo puede calibrar evaluaciones de los cargos que lidera. |
 | `EMPLOYEE` | Empleado o evaluador. Puede ser el sujeto evaluado o quien realiza la evaluacion segun la asignacion. |
 
 La autorizacion se basa en un **campo simple de rol** (`enum Role`) en el modelo `User`. La verificacion de permisos se realiza comparando el valor del campo `role` contra los roles permitidos para cada operacion.
+
+**AREA_LEAD scoping**: Los usuarios con rol `AREA_LEAD` se vinculan a cargos especificos mediante `Position.leaderId`. Un `AREA_LEAD` solo puede revisar y calibrar preguntas de evaluaciones cuyo `Position` tiene su `userId` en el campo `leaderId`. Esto garantiza que el segundo revisor tenga dominio sobre el area funcional del cargo evaluado.
 
 ### 5.4 Proteccion de Rutas
 
@@ -446,7 +451,8 @@ Define el rol de un usuario dentro del sistema.
 | Valor | Descripcion |
 |-------|-------------|
 | `ADMIN` | Administrador del sistema. Acceso completo a configuracion y gestion de usuarios. |
-| `HR` | Recursos Humanos. Gestiona manuales, crea y asigna evaluaciones, revisa resultados. |
+| `HR` | Recursos Humanos. Gestiona manuales, crea y asigna evaluaciones, revisa resultados. Primer revisor del esquema de calibracion. |
+| `AREA_LEAD` | Jefe de area. Segundo revisor del esquema de calibracion. Su alcance se limita a los cargos donde `Position.leaderId` coincide con su `userId`. |
 | `EMPLOYEE` | Empleado. Completa las evaluaciones asignadas. |
 
 ### ManualStatus
@@ -467,15 +473,15 @@ Estado del ciclo de vida de una evaluacion.
 | Valor | Descripcion |
 |-------|-------------|
 | `DRAFT` | La evaluacion fue creada pero aun no tiene preguntas generadas. |
-| `REVIEW` | Las preguntas fueron generadas. HR esta revisando, aprobando y calificando las preguntas. |
-| `ACTIVE` | La evaluacion fue activada (todas las preguntas revisadas) y asignada a empleados. |
+| `REVIEW` | Las preguntas fueron generadas. HR y AREA_LEAD estan revisando, calificando y calibrando las preguntas (editorial + IAP). |
+| `ACTIVE` | La evaluacion fue activada (todas las preguntas editorialmente aprobadas Y con `calibrationStatus = RESOLVED`) y asignada a empleados. |
 | `CLOSED` | El periodo de respuesta finalizo. Los resultados estan disponibles. |
 
 ### Dimensiones de Calificacion IAP
 
 Las preguntas generadas NO tienen una dimension o categoria asignada. Son una lista plana.
 
-Las unicas "dimensiones" del sistema son las **3 dimensiones de calificacion IAP** que HR utiliza para evaluar la calidad de cada pregunta generada:
+Las unicas "dimensiones" del sistema son las **3 dimensiones de calificacion IAP** que evaluan la calidad de cada pregunta generada:
 
 | Campo | Dimension | Descripcion |
 |-------|-----------|-------------|
@@ -483,11 +489,16 @@ Las unicas "dimensiones" del sistema son las **3 dimensiones de calificacion IAP
 | `coherenceRating` | Coherencia | La pregunta esta bien redactada y es clara. |
 | `adequacyRating` | Adecuacion | El nivel de la pregunta es apropiado para el cargo evaluado. |
 
-Cada campo es un entero de 1 a 5 (nullable hasta que HR revise la pregunta).
+Cada campo es un entero de 1 a 5. **A partir del esquema de dos revisores**, estas calificaciones ya no son campos escalares en `Question` — se almacenan en dos lugares:
 
-### QuestionStatus
+1. **`QuestionReview`**: cada revisor (`HR` y `AREA_LEAD`) registra sus propias calificaciones independientes.
+2. **`QuestionConsensus`**: una vez alcanzado el consenso, se almacena el valor final acordado (1:1 con `Question`).
 
-Estado de una pregunta generada por el servicio RAG.
+Los resultados y el calculo del IAP leen desde **`QuestionConsensus`** (post-calibracion), no de campos escalares en `Question`.
+
+### QuestionStatus (Editorial)
+
+Estado **editorial** de una pregunta generada por el servicio RAG. Refleja la calidad del **texto** de la pregunta, no la calidad de las calificaciones IAP. Es un concepto ortogonal a `CalibrationStatus`.
 
 | Valor | Descripcion |
 |-------|-------------|
@@ -495,6 +506,48 @@ Estado de una pregunta generada por el servicio RAG.
 | `APPROVED` | La pregunta fue revisada y aprobada por HR sin modificaciones. |
 | `EDITED` | La pregunta fue editada por HR (el texto original se preserva en `originalText`). |
 | `REJECTED` | La pregunta fue rechazada por HR (no se incluira en la evaluacion). |
+
+### ReviewerRole
+
+Identifica que slot de revisor llena una calificacion dentro del esquema de dos revisores.
+
+| Valor | Descripcion |
+|-------|-------------|
+| `HR` | Calificacion realizada por Recursos Humanos (primer revisor). |
+| `AREA_LEAD` | Calificacion realizada por el jefe de area (segundo revisor). |
+
+### CalibrationStatus
+
+Estado de la **validacion de calificaciones** (calidad de los ratings IAP) de una pregunta. Es ortogonal al `QuestionStatus` editorial.
+
+| Valor | Descripcion |
+|-------|-------------|
+| `PENDING` | Faltan una o ambas revisiones (HR o AREA_LEAD). |
+| `IN_CALIBRATION` | Ambas revisiones existen pero divergen (|Δ| ≥ 2 en alguna dimension). Requiere resolucion manual de HR/ADMIN. |
+| `RESOLVED` | Se alcanzo el consenso: auto-consenso (|Δ| < 2 en todas las dimensiones) o resolucion manual. Existe un `QuestionConsensus`. |
+
+### Flujo de Calibracion de Dos Revisores (Human-in-the-Loop)
+
+El esquema de validacion Human-in-the-Loop requiere que DOS revisores independientes califiquen cada pregunta antes de que una evaluacion pueda activarse. El flujo es:
+
+1. **Revision editorial (HR)**: HR revisa el texto de cada pregunta (`QuestionStatus` → `APPROVED`, `EDITED` o `REJECTED`).
+
+2. **Primera revision IAP (HR)**: HR envia sus calificaciones (relevance, coherence, adequacy 1-5) mediante `submitReview`. Se crea un `QuestionReview` con `reviewerRole = HR`.
+
+3. **Segunda revision IAP (AREA_LEAD)**: El `AREA_LEAD` vinculado al cargo de la evaluacion envia sus propias calificaciones mediante `submitReview`. Se crea un `QuestionReview` con `reviewerRole = AREA_LEAD`.
+
+4. **Calibracion automatica (`computeCalibration`)**: Al guardar la segunda revision, el sistema compara ambos `QuestionReview`:
+   - Si faltan reviews → `calibrationStatus = PENDING`.
+   - Si `|Δ| < 2` en todas las dimensiones → **auto-consenso**: se crea `QuestionConsensus` con el promedio redondeado de ambas reviews y `calibrationStatus = RESOLVED`.
+   - Si `|Δ| ≥ 2` en al menos una dimension → `calibrationStatus = IN_CALIBRATION` (requiere intervention humana).
+
+5. **Resolucion manual (`resolveCalibration`)**: Cuando hay divergencia (`IN_CALIBRATION`), HR o ADMIN introduce los valores finales de consenso. Se crea/actualiza `QuestionConsensus` y se establece `calibrationStatus = RESOLVED`.
+
+6. **Activacion de evaluacion**: `activateEvaluation` requiere que **TODAS** las preguntas cumplan:
+   - `questionStatus` editorial en `APPROVED` o `EDITED` (no `PENDING` ni `REJECTED`), **Y**
+   - `calibrationStatus === RESOLVED` (consenso alcanzado).
+
+Ambas condiciones son necesarias. La calidad editorial del texto y la calidad de las calificaciones son dimensiones independientes que deben validarse por separado.
 
 ### AssignmentStatus
 

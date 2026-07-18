@@ -10,7 +10,7 @@ erDiagram
         String email
         Boolean emailVerified
         String image
-        Role role "ADMIN | HR | EMPLOYEE"
+        Role role "ADMIN | HR | AREA_LEAD | EMPLOYEE"
         DateTime createdAt
         DateTime updatedAt
     }
@@ -56,6 +56,7 @@ erDiagram
         String name "unique"
         String description
         String department
+        String leaderId FK "nullable - links AREA_LEAD user"
         DateTime createdAt
         DateTime updatedAt
     }
@@ -90,10 +91,31 @@ erDiagram
         Int order
         QuestionStatus status "PENDING | APPROVED | EDITED | REJECTED"
         String originalText
-        Int relevanceRating "1-5 nullable"
-        Int coherenceRating "1-5 nullable"
-        Int adequacyRating "1-5 nullable"
+        CalibrationStatus calibrationStatus "PENDING | IN_CALIBRATION | RESOLVED"
         String evaluationId FK
+        DateTime createdAt
+        DateTime updatedAt
+    }
+
+    QuestionReview {
+        String id PK "cuid"
+        ReviewerRole reviewerRole "HR | AREA_LEAD"
+        Int relevanceRating "1-5"
+        Int coherenceRating "1-5"
+        Int adequacyRating "1-5"
+        String questionId FK
+        String reviewerId FK
+        DateTime createdAt
+        DateTime updatedAt
+    }
+
+    QuestionConsensus {
+        String id PK "cuid"
+        Int relevanceRating "1-5"
+        Int coherenceRating "1-5"
+        Int adequacyRating "1-5"
+        String resolvedById FK
+        String questionId FK "unique (1:1)"
         DateTime createdAt
         DateTime updatedAt
     }
@@ -124,12 +146,17 @@ erDiagram
     User ||--o{ Evaluation : "created"
     User ||--o{ EvaluationAssignment : "is evaluated by (employeeId)"
     User ||--o{ EvaluationAssignment : "evaluates (evaluatorId)"
+    User ||--o{ Position : "leads (leaderId)"
+    User ||--o{ QuestionReview : "wrote"
+    User ||--o{ QuestionConsensus : "resolved"
     Position ||--|| Manual : "has one"
     Position ||--o{ Evaluation : "has many"
     Manual ||--o{ Evaluation : "has many"
     Evaluation ||--o{ Question : "has many"
     Evaluation ||--o{ EvaluationAssignment : "has many"
     Question ||--o{ Response : "has many"
+    Question ||--o{ QuestionReview : "has many (max 1 per reviewerRole)"
+    Question ||--|| QuestionConsensus : "has one (1:1)"
     EvaluationAssignment ||--o{ Response : "has many"
 ```
 
@@ -137,10 +164,12 @@ erDiagram
 
 | Enum | Values | Description |
 |------|--------|-------------|
-| **Role** | `ADMIN`, `HR`, `EMPLOYEE` | User access level. Default: `EMPLOYEE` |
+| **Role** | `ADMIN`, `HR`, `AREA_LEAD`, `EMPLOYEE` | User access level. Default: `EMPLOYEE`. `AREA_LEAD` is the second reviewer in the two-reviewer calibration scheme. |
 | **ManualStatus** | `PENDING`, `PROCESSING`, `PROCESSED`, `ERROR` | Lifecycle of a manual upload and RAG processing |
 | **EvaluationStatus** | `DRAFT`, `REVIEW`, `ACTIVE`, `CLOSED` | Evaluation workflow stages |
-| **QuestionStatus** | `PENDING`, `APPROVED`, `EDITED`, `REJECTED` | HR review status for AI-generated questions |
+| **QuestionStatus** | `PENDING`, `APPROVED`, `EDITED`, `REJECTED` | HR editorial review status for AI-generated questions (text quality). Orthogonal to `CalibrationStatus`. |
+| **ReviewerRole** | `HR`, `AREA_LEAD` | Identifies which reviewer slot a `QuestionReview` rating fills. Max 1 review per role per question. |
+| **CalibrationStatus** | `PENDING`, `IN_CALIBRATION`, `RESOLVED` | Tracks the two-reviewer validation state of a `Question`. `PENDING` = missing reviews, `IN_CALIBRATION` = reviews diverge (|Δ| ≥ 2), `RESOLVED` = consensus reached. |
 | **AssignmentStatus** | `PENDING`, `IN_PROGRESS`, `COMPLETED` | Employee evaluation assignment progress |
 
 ## Unique Constraints
@@ -150,3 +179,5 @@ erDiagram
 | **Manual** | `positionId` unique | Enforces 1:1 relationship with Position |
 | **EvaluationAssignment** | `(evaluationId, employeeId)` | Un solo evaluador por empleado por evaluacion |
 | **Response** | `(questionId, assignmentId)` | One response per question per assignment |
+| **QuestionReview** | `(questionId, reviewerRole)` | Max 1 HR + 1 AREA_LEAD review per question |
+| **QuestionConsensus** | `questionId` unique | Enforces 1:1 relationship with Question |

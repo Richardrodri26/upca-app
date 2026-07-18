@@ -134,3 +134,34 @@ export async function deletePosition(id: string) {
     };
   }
 }
+
+export async function getAreaLeads() {
+  await requireAuth({ roles: ["ADMIN", "HR"] });
+
+  const users = await prisma.user.findMany({
+    where: { role: "AREA_LEAD" },
+    select: { id: true, name: true, email: true },
+    orderBy: { name: "asc" },
+  });
+
+  return users;
+}
+
+export async function setPositionLeader(
+  positionId: string,
+  leaderId: string | null,
+) {
+  await requireAuth({ roles: ["ADMIN", "HR"] });
+
+  try {
+    await prisma.position.update({
+      where: { id: positionId },
+      data: { leaderId },
+    });
+    revalidatePath("/positions");
+    revalidatePath(`/positions/${positionId}`);
+    return { success: true };
+  } catch {
+    return { success: false, error: "No se pudo asignar el líder del cargo" };
+  }
+}

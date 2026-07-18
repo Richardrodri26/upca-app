@@ -29,6 +29,12 @@ const STATUS_OPTIONS = [
   { value: "CLOSED", label: "Cerradas" },
 ];
 
+const primaryCta =
+  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 transition-transform duration-150 active:scale-[0.96]";
+
+const secondaryLink =
+  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground h-9 px-3 transition-colors duration-150 active:scale-[0.96]";
+
 export default function EvaluationsPage() {
   const { data: session } = useSession();
   const [status, setStatus] = useState<string>("all");
@@ -37,28 +43,37 @@ export default function EvaluationsPage() {
 
   const { data: evaluations = [], isLoading } = useEvaluations(statusFilter);
 
-  // Role guard
-  if (session?.user?.role !== "ADMIN" && session?.user?.role !== "HR") {
+  if (
+    session?.user?.role !== "ADMIN" &&
+    session?.user?.role !== "HR" &&
+    session?.user?.role !== "AREA_LEAD"
+  ) {
     return (
-      <div className="text-muted-foreground py-16 text-center">
-        No tiene permisos para ver evaluaciones
+      <div className="w-full">
+        <p className="text-muted-foreground text-pretty py-16 text-center">
+          No tiene permisos para ver evaluaciones
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight">Evaluaciones</h1>
-        <Link
-          href="/evaluations/generate"
-          className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
-        >
+    <div className="flex w-full flex-col gap-8">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-balance text-2xl font-bold tracking-tight">
+            Evaluaciones
+          </h1>
+          <p className="text-muted-foreground text-pretty text-sm">
+            Genera y gestiona evaluaciones de desempeño por cargo.
+          </p>
+        </div>
+        <Link href="/evaluations/generate" className={primaryCta}>
           Generar Nueva
         </Link>
       </div>
 
-      <div className="flex flex-wrap gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <Select value={status} onValueChange={(v) => v && setStatus(v)}>
           <SelectTrigger className="w-full sm:w-48">
             <SelectValue placeholder="Estado" />
@@ -71,34 +86,40 @@ export default function EvaluationsPage() {
             ))}
           </SelectContent>
         </Select>
+        {!isLoading && evaluations.length > 0 && (
+          <p className="text-muted-foreground tabular-nums text-sm">
+            {evaluations.length}{" "}
+            {evaluations.length === 1 ? "evaluación" : "evaluaciones"}
+          </p>
+        )}
       </div>
 
       {isLoading ? (
-        <div className="text-muted-foreground py-16 text-center">
-          Cargando evaluaciones...
+        <div className="rounded-xl border border-dashed py-16">
+          <p className="text-muted-foreground text-center">
+            Cargando evaluaciones...
+          </p>
         </div>
       ) : evaluations.length === 0 ? (
-        <div className="text-muted-foreground py-16 text-center flex flex-col items-center gap-4">
-          <p>No hay evaluaciones todavía</p>
-          <Link
-            href="/evaluations/generate"
-            className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
-          >
+        <div className="flex flex-col items-center gap-4 rounded-xl border border-dashed py-16">
+          <p className="text-muted-foreground text-pretty text-center">
+            No hay evaluaciones todavía
+          </p>
+          <Link href="/evaluations/generate" className={primaryCta}>
             Generar la primera
           </Link>
         </div>
       ) : (
         <>
-          {/* Desktop / tablet: full table with sticky first column */}
           <div className="hidden md:block">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead sticky>Título</TableHead>
                   <TableHead>Cargo</TableHead>
-                  <TableHead>Estado</TableHead>
-                  <TableHead>Preguntas</TableHead>
-                  <TableHead className="w-32">Acciones</TableHead>
+                  <TableHead className="w-32">Estado</TableHead>
+                  <TableHead className="w-20 text-right">Preguntas</TableHead>
+                  <TableHead className="w-32 text-right">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -113,15 +134,15 @@ export default function EvaluationsPage() {
                     <TableCell>
                       <EvaluationStatusBadge status={eval_.status} />
                     </TableCell>
-                    <TableCell className="text-muted-foreground">
+                    <TableCell className="text-muted-foreground tabular-nums text-right">
                       {eval_._count?.questions ?? "—"}
                     </TableCell>
-                    <TableCell>
-                      <div className="flex gap-1">
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
                         {eval_.status === "REVIEW" && (
                           <Link
                             href={`/evaluations/${eval_.id}/review`}
-                            className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground h-9 px-3"
+                            className={secondaryLink}
                           >
                             Revisar
                           </Link>
@@ -130,7 +151,7 @@ export default function EvaluationsPage() {
                           eval_.status === "CLOSED") && (
                           <Link
                             href={`/evaluations/${eval_.id}`}
-                            className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground h-9 px-3"
+                            className={secondaryLink}
                           >
                             Ver
                           </Link>
@@ -143,28 +164,27 @@ export default function EvaluationsPage() {
             </Table>
           </div>
 
-          {/* Mobile: card list fallback */}
-          <div className="flex flex-col gap-3 md:hidden">
+          <div className="flex flex-col gap-4 md:hidden">
             {evaluations.map((eval_) => (
               <div
                 key={eval_.id}
-                className="rounded-lg border p-4 flex flex-col gap-2"
+                className="flex flex-col gap-3 rounded-xl border p-5"
               >
                 <div className="flex items-start justify-between gap-2">
-                  <span className="font-medium">{eval_.title}</span>
+                  <span className="font-medium text-pretty">{eval_.title}</span>
                   <EvaluationStatusBadge status={eval_.status} />
                 </div>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-muted-foreground text-pretty text-sm">
                   {eval_.position?.name ?? "—"}
                 </p>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-muted-foreground tabular-nums text-sm">
                   {eval_._count?.questions ?? "—"} preguntas
                 </p>
                 <div className="flex flex-wrap gap-2 pt-1">
                   {eval_.status === "REVIEW" && (
                     <Link
                       href={`/evaluations/${eval_.id}/review`}
-                      className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium border hover:bg-accent hover:text-accent-foreground h-9 px-3"
+                      className={secondaryLink}
                     >
                       Revisar
                     </Link>
@@ -172,7 +192,7 @@ export default function EvaluationsPage() {
                   {(eval_.status === "ACTIVE" || eval_.status === "CLOSED") && (
                     <Link
                       href={`/evaluations/${eval_.id}`}
-                      className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium border hover:bg-accent hover:text-accent-foreground h-9 px-3"
+                      className={secondaryLink}
                     >
                       Ver
                     </Link>

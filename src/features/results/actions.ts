@@ -11,7 +11,7 @@ import { calculateIAP, calculateIRTO } from "./utils/iap";
 export async function getDashboardStats() {
   await requireAuth({ roles: ["ADMIN", "HR"] });
 
-  const [activeEvals, processedManuals, evaluatedEmployees, allRatedQuestions] =
+  const [activeEvals, processedManuals, evaluatedEmployees, consensuses] =
     await Promise.all([
       prisma.evaluation.count({ where: { status: "ACTIVE" } }),
       prisma.manual.count({ where: { status: "PROCESSED" } }),
@@ -22,12 +22,7 @@ export async function getDashboardStats() {
           distinct: ["employeeId"],
         })
         .then((r) => r.length),
-      prisma.question.findMany({
-        where: {
-          relevanceRating: { not: null },
-          coherenceRating: { not: null },
-          adequacyRating: { not: null },
-        },
+      prisma.questionConsensus.findMany({
         select: {
           relevanceRating: true,
           coherenceRating: true,
@@ -36,7 +31,7 @@ export async function getDashboardStats() {
       }),
     ]);
 
-  const iapResult = calculateIAP(allRatedQuestions);
+  const iapResult = calculateIAP(consensuses);
 
   return {
     activeEvaluations: activeEvals,
@@ -109,6 +104,7 @@ export async function getEvaluationResults(evaluationId: string) {
     prisma.question.findMany({
       where: { evaluationId },
       orderBy: { order: "asc" },
+      include: { consensus: true },
     }),
   ]);
 
@@ -125,7 +121,10 @@ export async function getEvaluationResults(evaluationId: string) {
         completedAssignments.length
       : 0;
 
-  const iapResult = calculateIAP(questions);
+  const consensuses = questions
+    .map((q) => q.consensus)
+    .filter((c): c is NonNullable<typeof c> => c !== null);
+  const iapResult = calculateIAP(consensuses);
   const irtoResult = calculateIRTO(evaluation.generationTime ?? 0);
 
   return {

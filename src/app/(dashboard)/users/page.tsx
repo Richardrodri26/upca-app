@@ -56,6 +56,7 @@ import {
 const ROLE_LABELS: Record<UserRole, string> = {
   ADMIN: "Administrador",
   HR: "RR.HH.",
+  AREA_LEAD: "Líder de Área",
   EMPLOYEE: "Empleado",
 };
 

@@ -40,10 +40,21 @@ const employeeItems = [
   { label: "Mis Resultados", href: "/my-results" },
 ];
 
+const areaLeadItems = [
+  { label: "Dashboard", href: "/" },
+  { label: "Evaluaciones", href: "/evaluations" },
+  { label: "Mis Resultados", href: "/my-results" },
+];
+
 export function AppSidebar({ user }: AppSidebarProps) {
   const isAdminOrHr = user.role === "ADMIN" || user.role === "HR";
   const isAdmin = user.role === "ADMIN";
-  const baseItems = isAdminOrHr ? adminHrItems : employeeItems;
+  const isAreaLead = user.role === "AREA_LEAD";
+  const baseItems = isAdminOrHr
+    ? adminHrItems
+    : isAreaLead
+      ? areaLeadItems
+      : employeeItems;
   const navItems = isAdmin ? [...baseItems, ...adminOnlyItems] : baseItems;
 
   return (

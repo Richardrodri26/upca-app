@@ -7,7 +7,8 @@ import { ReviewSummaryBar } from "@/features/evaluations/components/review-summa
 import {
   useActivateEvaluation,
   useEvaluation,
-  useRateQuestion,
+  useResolveCalibration,
+  useSubmitReview,
   useUpdateQuestionStatus,
   useUpdateQuestionText,
 } from "@/features/evaluations/queries";
@@ -24,11 +25,14 @@ export default function ReviewPage({
 
   const updateStatus = useUpdateQuestionStatus();
   const updateText = useUpdateQuestionText();
-  const rateQuestion = useRateQuestion();
+  const submitReview = useSubmitReview();
+  const resolveCalibration = useResolveCalibration();
   const activateEval = useActivateEvaluation();
 
-  // Role guard
-  if (session?.user?.role !== "ADMIN" && session?.user?.role !== "HR") {
+  const role = session?.user?.role;
+
+  // Role guard — HR, AREA_LEAD y ADMIN pueden revisar
+  if (role !== "ADMIN" && role !== "HR" && role !== "AREA_LEAD") {
     return (
       <div className="text-muted-foreground py-16 text-center">
         No tiene permisos para revisar evaluaciones
@@ -59,30 +63,49 @@ export default function ReviewPage({
   const pendingCount = questions.filter((q) => q.status === "PENDING").length;
   const rejectedCount = questions.filter((q) => q.status === "REJECTED").length;
 
-  const canActivate = pendingCount === 0 && rejectedCount === 0;
+  const hrReviewsCount = questions.filter((q) =>
+    q.reviews.some((r) => r.reviewerRole === "HR"),
+  ).length;
+  const leadReviewsCount = questions.filter((q) =>
+    q.reviews.some((r) => r.reviewerRole === "AREA_LEAD"),
+  ).length;
+  const resolvedCount = questions.filter(
+    (q) => q.calibrationStatus === "RESOLVED",
+  ).length;
 
-  // Calculate average ratings
-  const ratedQuestions = questions.filter(
-    (q) =>
-      q.relevanceRating != null &&
-      q.coherenceRating != null &&
-      q.adequacyRating != null,
-  );
+  // Activación: todas aprobadas/editadas Y calibradas (RESOLVED)
+  const canActivate =
+    pendingCount === 0 &&
+    rejectedCount === 0 &&
+    questions.every((q) => q.calibrationStatus === "RESOLVED");
+
+  // Promedios desde el consenso
+  const ratedQuestions = questions.filter((q) => q.consensus !== null);
 
   const averageRatings =
     ratedQuestions.length > 0
       ? {
           relevance:
-            ratedQuestions.reduce((s, q) => s + (q.relevanceRating ?? 0), 0) /
-            ratedQuestions.length,
+            ratedQuestions.reduce(
+              (s, q) => s + (q.consensus?.relevanceRating ?? 0),
+              0,
+            ) / ratedQuestions.length,
           coherence:
-            ratedQuestions.reduce((s, q) => s + (q.coherenceRating ?? 0), 0) /
-            ratedQuestions.length,
+            ratedQuestions.reduce(
+              (s, q) => s + (q.consensus?.coherenceRating ?? 0),
+              0,
+            ) / ratedQuestions.length,
           adequacy:
-            ratedQuestions.reduce((s, q) => s + (q.adequacyRating ?? 0), 0) /
-            ratedQuestions.length,
+            ratedQuestions.reduce(
+              (s, q) => s + (q.consensus?.adequacyRating ?? 0),
+              0,
+            ) / ratedQuestions.length,
         }
       : null;
+
+  // El rol del revisor actual: AREA_LEAD manda su slot, HR/ADMIN mandan RRHH
+  const reviewerRole = role === "AREA_LEAD" ? "AREA_LEAD" : "HR";
+  const canResolveCalibration = role === "ADMIN" || role === "HR";
 
   return (
     <div className="flex flex-col gap-4">
@@ -93,6 +116,9 @@ export default function ReviewPage({
         totalQuestions={questions.length}
         reviewedCount={reviewedCount}
         pendingCount={pendingCount}
+        hrReviewsCount={hrReviewsCount}
+        leadReviewsCount={leadReviewsCount}
+        resolvedCount={resolvedCount}
         averageRatings={averageRatings}
         canActivate={canActivate}
         onActivate={() => activateEval.mutate(id)}
@@ -104,6 +130,7 @@ export default function ReviewPage({
           <QuestionReviewCard
             key={q.id}
             question={q}
+            reviewerRole={reviewerRole}
             onApprove={(qId) =>
               updateStatus.mutate({ id: qId, status: "APPROVED" })
             }
@@ -111,9 +138,15 @@ export default function ReviewPage({
               updateStatus.mutate({ id: qId, status: "REJECTED" })
             }
             onUpdateText={(qId, text) => updateText.mutate({ id: qId, text })}
-            onRate={(qId, ratings) =>
-              rateQuestion.mutate({ id: qId, ...ratings })
+            onSubmitReview={(qId, ratings) =>
+              submitReview.mutate({ id: qId, ...ratings })
             }
+            {...(canResolveCalibration
+              ? {
+                  onResolveCalibration: (qId, final) =>
+                    resolveCalibration.mutate({ id: qId, ...final }),
+                }
+              : {})}
           />
         ))}
       </div>

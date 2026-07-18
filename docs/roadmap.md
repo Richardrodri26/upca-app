@@ -2,7 +2,7 @@
 
 **Proyecto**: Sistema Inteligente de Evaluacion de Desempeno
 **Inicio**: 2026-06-15
-**Estado general**: COMPLETADO — Todas las fases (0-6) finalizadas ✅
+**Estado general**: COMPLETADO — Todas las fases (0-6) finalizadas ✅ — Feature adicional: Two Reviewer Calibration ✅
 
 ---
 
@@ -130,6 +130,23 @@
 
 ---
 
+### Phase 7: Two Reviewer Calibration `COMPLETED`
+
+**Depende de**: Phase 6
+**RAG**: No — cambios solo en UPCA App (schema, logica, UI)
+
+Esquema de validacion Human-in-the-Loop con dos revisores independientes (HR + AREA_LEAD) para las calificaciones IAP de cada pregunta.
+
+- [x] 7.1 Schema diseñado y migrado (enum `ReviewerRole`, `CalibrationStatus`, modelos `QuestionReview`, `QuestionConsensus`, `Position.leaderId`, `Role.AREA_LEAD`)
+- [x] 7.2 Server Actions implementadas (`submitReview`, `computeCalibration`, `resolveCalibration`, `activateEvaluation` actualizado)
+- [x] 7.3 UI components actualizada (review page con dos revisores, calibration panel, AREA_LEAD scoped views)
+- [x] 7.4 Tests passing
+
+**Notas**:
+- 2026-07-16: Two Reviewer Calibration implementado. Schema migrado: `QuestionReview` (1:1 unique per reviewerRole per question), `QuestionConsensus` (1:1 con Question), `Position.leaderId` para vincular AREA_LEAD. `Question.relevanceRating/coherenceRating/adequacyRating` removidos (ahora en `QuestionReview` y `QuestionConsensus`). Logica: `submitReview` → `computeCalibration` (auto-consenso si |Δ| < 2, `IN_CALIBRATION` si |Δ| ≥ 2) → `resolveCalibration` (manual). `activateEvaluation` requiere `QuestionStatus` editorial (APPROVED/EDITED) **Y** `CalibrationStatus = RESOLVED`. Resultados/IAP leen desde `QuestionConsensus`.
+
+---
+
 ## Coordinacion con companero RAG
 
 | Fase nuestra | Que necesitamos del RAG | Estado RAG |
@@ -172,3 +189,4 @@
 - RAG service es HTTP separado (FastAPI/Python por el compañero). Integración real completada (ver `docs/DOCUMENTACION_API.md` y `src/lib/rag-client.ts`); el modo mock fue retirado.
 - 2026-07-05: Feature de gestión de base de conocimientos RAG (`POST /api/base_conocimiento/procesar|guardar`, `GET .../contenido`, `DELETE .../eliminar`) añadida tras Phase 6, fuera de las fases originales. Refleja el contrato real del servicio del compañero.
 - Deploy: Vercel + Neon Postgres. Se configura al final del proyecto.
+- 2026-07-16: Feature de Two Reviewer Calibration añadido tras Phase 6 (fuera de las fases originales). Esquema Human-in-the-Loop con dos revisores (HR + AREA_LEAD) para calificaciones IAP. Ver Phase 7 arriba y `docs/erd.md` / `docs/architecture.md` actualizados.

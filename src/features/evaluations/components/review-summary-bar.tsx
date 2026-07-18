@@ -11,6 +11,9 @@ type ReviewSummaryBarProps = {
   totalQuestions: number;
   reviewedCount: number;
   pendingCount: number;
+  hrReviewsCount: number;
+  leadReviewsCount: number;
+  resolvedCount: number;
   averageRatings: {
     relevance: number;
     coherence: number;
@@ -28,6 +31,9 @@ export function ReviewSummaryBar({
   totalQuestions,
   reviewedCount,
   pendingCount,
+  hrReviewsCount,
+  leadReviewsCount,
+  resolvedCount,
   averageRatings,
   canActivate,
   onActivate,
@@ -79,7 +85,29 @@ export function ReviewSummaryBar({
         </p>
       )}
 
-      {/* Average ratings */}
+      {/* Calibration counters */}
+      <div className="flex flex-wrap gap-x-6 gap-y-1 mt-3 text-xs text-muted-foreground">
+        <span>
+          RRHH:{" "}
+          <span className="font-medium tabular-nums text-foreground">
+            {hrReviewsCount}/{totalQuestions}
+          </span>
+        </span>
+        <span>
+          Líderes:{" "}
+          <span className="font-medium tabular-nums text-foreground">
+            {leadReviewsCount}/{totalQuestions}
+          </span>
+        </span>
+        <span>
+          Consensos:{" "}
+          <span className="font-medium tabular-nums text-foreground">
+            {resolvedCount}/{totalQuestions}
+          </span>
+        </span>
+      </div>
+
+      {/* Average ratings (from consensus) */}
       {averageRatings && (
         <div className="flex flex-wrap gap-x-6 gap-y-2 mt-3 text-sm">
           <span>

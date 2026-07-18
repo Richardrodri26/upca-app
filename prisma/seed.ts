@@ -105,6 +105,24 @@ async function main() {
     },
   });
 
+  // 1 area-lead for two-reviewer calibration testing
+  const areaLead = await prisma.user.create({
+    data: {
+      name: "Sofia Ramirez",
+      email: "arealead@upca.com",
+      emailVerified: true,
+      role: "AREA_LEAD",
+    },
+  });
+  await prisma.account.create({
+    data: {
+      accountId: areaLead.id,
+      providerId: "credential",
+      userId: areaLead.id,
+      password: defaultPassword,
+    },
+  });
+
   // 5 employees
   const employeeData = [
     { name: "Juan Perez", email: "juan@upca.com" },
@@ -136,7 +154,7 @@ async function main() {
     }),
   );
 
-  console.log(`  ✅ ${3 + employees.length} users created`);
+  console.log(`  ✅ ${4 + employees.length} users created`);
   console.log("");
   console.log("🎉 Seed completado!");
   console.log("");
@@ -146,6 +164,7 @@ async function main() {
   );
   console.log("   hr1@upca.com       (HR)");
   console.log("   hr2@upca.com       (HR)");
+  console.log("   arealead@upca.com  (AREA_LEAD)");
   console.log("   juan@upca.com      (EMPLOYEE)");
   console.log("   ana@upca.com       (EMPLOYEE)");
   console.log("");

@@ -1,5 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
-import { getDepartments, getPosition, getPositions } from "./actions";
+import {
+  getAreaLeads,
+  getDepartments,
+  getPosition,
+  getPositions,
+} from "./actions";
 
 export function usePositions(search?: string, department?: string) {
   return useQuery({
@@ -21,5 +26,13 @@ export function useDepartments() {
     queryKey: ["positions", "departments"],
     queryFn: () => getDepartments(),
     staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+}
+
+export function useAreaLeads() {
+  return useQuery({
+    queryKey: ["positions", "area-leads"],
+    queryFn: () => getAreaLeads(),
+    staleTime: 60 * 1000,
   });
 }

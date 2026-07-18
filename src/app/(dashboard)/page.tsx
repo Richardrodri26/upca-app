@@ -44,61 +44,69 @@ function HRDashboard() {
   const iapColor = stats ? metricColor(stats.averageIAP) : "default";
 
   return (
-    <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
+    <div className="flex w-full flex-col gap-8">
+      <div className="flex flex-col gap-1">
+        <h1 className="text-balance text-2xl font-bold tracking-tight">
+          Dashboard
+        </h1>
+        <p className="text-pretty text-sm text-muted-foreground">
+          Resumen general del sistema de evaluación
+        </p>
+      </div>
 
       {/* Stat cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="pb-2">
+        <Card className="[--card-spacing:--spacing(6)]">
+          <CardHeader>
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Evaluaciones Activas
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold tabular-nums">
+            <p className="text-4xl font-bold tabular-nums">
               {isLoading ? "—" : (stats?.activeEvaluations ?? 0)}
             </p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="pb-2">
+        <Card className="[--card-spacing:--spacing(6)]">
+          <CardHeader>
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Manuales Procesados
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold tabular-nums">
+            <p className="text-4xl font-bold tabular-nums">
               {isLoading ? "—" : (stats?.processedManuals ?? 0)}
             </p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="pb-2">
+        <Card className="[--card-spacing:--spacing(6)]">
+          <CardHeader>
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Empleados Evaluados
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold tabular-nums">
+            <p className="text-4xl font-bold tabular-nums">
               {isLoading ? "—" : (stats?.evaluatedEmployees ?? 0)}
             </p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="pb-2">
+        <Card className="[--card-spacing:--spacing(6)]">
+          <CardHeader>
             <CardTitle className="text-sm font-medium text-muted-foreground">
               IAP Promedio
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-baseline gap-2">
-              <p className="text-3xl font-bold tabular-nums">
+              <p className="text-4xl font-bold tabular-nums">
                 {isLoading ? "—" : `${stats?.averageIAP ?? 0}%`}
               </p>
               {stats && (
                 <Badge variant={iapColor}>
-                  {stats.ratedQuestions} calificadas
+                  <span className="tabular-nums">{stats.ratedQuestions}</span>{" "}
+                  calificadas
                 </Badge>
               )}
             </div>
@@ -113,17 +121,19 @@ function HRDashboard() {
         </CardHeader>
         <CardContent>
           {recentEvals.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-4 text-center">
-              No hay evaluaciones todavía
-            </p>
+            <div className="rounded-xl border border-dashed py-16">
+              <p className="text-pretty text-center text-sm text-muted-foreground">
+                No hay evaluaciones todavía
+              </p>
+            </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Título</TableHead>
-                  <TableHead>Cargo</TableHead>
-                  <TableHead>Estado</TableHead>
-                  <TableHead className="w-24">Acciones</TableHead>
+                  <TableHead className="w-40">Cargo</TableHead>
+                  <TableHead className="w-32">Estado</TableHead>
+                  <TableHead className="w-24 text-right">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -136,10 +146,10 @@ function HRDashboard() {
                     <TableCell>
                       <EvaluationStatusBadge status={e.status} />
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-right">
                       <Link
                         href={`/evaluations/${e.id}/results`}
-                        className="text-sm hover:underline text-primary"
+                        className="text-sm text-primary transition-transform duration-150 hover:underline active:scale-[0.96]"
                       >
                         Resultados
                       </Link>
@@ -165,45 +175,50 @@ function EmployeeDashboard() {
   const { data: assignments = [] } = useMyAssignments();
 
   return (
-    <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold tracking-tight">
-        Bienvenido, {session?.user?.name ?? "Empleado"}
-      </h1>
+    <div className="flex w-full flex-col gap-8">
+      <div className="flex flex-col gap-1">
+        <h1 className="text-balance text-2xl font-bold tracking-tight">
+          Bienvenido, {session?.user?.name ?? "Empleado"}
+        </h1>
+        <p className="text-pretty text-sm text-muted-foreground">
+          Tus evaluaciones asignadas
+        </p>
+      </div>
 
       {/* Stat cards */}
       <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader className="pb-2">
+        <Card className="[--card-spacing:--spacing(6)]">
+          <CardHeader>
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Pendientes
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold tabular-nums">
+            <p className="text-4xl font-bold tabular-nums">
               {isLoading ? "—" : (stats?.pendingCount ?? 0)}
             </p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="pb-2">
+        <Card className="[--card-spacing:--spacing(6)]">
+          <CardHeader>
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Completadas
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold tabular-nums">
+            <p className="text-4xl font-bold tabular-nums">
               {isLoading ? "—" : (stats?.completedCount ?? 0)}
             </p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="pb-2">
+        <Card className="[--card-spacing:--spacing(6)]">
+          <CardHeader>
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Puntaje Promedio
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold tabular-nums">
+            <p className="text-4xl font-bold tabular-nums">
               {isLoading ? "—" : (stats?.averageScore.toFixed(1) ?? "—")}
             </p>
           </CardContent>
@@ -217,9 +232,11 @@ function EmployeeDashboard() {
         </CardHeader>
         <CardContent>
           {assignments.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-4 text-center">
-              No tiene evaluaciones asignadas
-            </p>
+            <div className="rounded-xl border border-dashed py-16">
+              <p className="text-pretty text-center text-sm text-muted-foreground">
+                No tiene evaluaciones asignadas
+              </p>
+            </div>
           ) : (
             <div className="flex flex-col gap-2">
               {assignments.slice(0, 5).map((a) => {
@@ -262,7 +279,7 @@ function EmployeeDashboard() {
                       )}
                       <Link
                         href={`/my-evaluations/${a.id}`}
-                        className="text-xs hover:underline text-primary"
+                        className="text-xs text-primary transition-transform duration-150 hover:underline active:scale-[0.96]"
                       >
                         {a.status === "COMPLETED" ? "Ver" : "Responder"}
                       </Link>

@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { EvaluationStatus } from "@/generated/prisma/client";
-import type { RateQuestionInput } from "@/lib/validators/evaluation";
 import {
   activateEvaluation,
   closeEvaluation,
@@ -8,10 +7,12 @@ import {
   getEvaluation,
   getEvaluations,
   getPositionsWithProcessedManual,
-  rateQuestion,
+  resolveCalibration,
+  submitReview,
   updateQuestionStatus,
   updateQuestionText,
 } from "./actions";
+import type { ConsensusInput, ReviewQuestionInput } from "./validators";
 
 // ── Queries ──
 
@@ -83,7 +84,7 @@ export function useUpdateQuestionStatus() {
   });
 }
 
-export function useRateQuestion() {
+export function useSubmitReview() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({
@@ -91,7 +92,22 @@ export function useRateQuestion() {
       ...ratings
     }: {
       id: string;
-    } & RateQuestionInput) => rateQuestion(id, ratings),
+    } & ReviewQuestionInput) => submitReview(id, ratings),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["evaluations"] });
+    },
+  });
+}
+
+export function useResolveCalibration() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      ...consensus
+    }: {
+      id: string;
+    } & ConsensusInput) => resolveCalibration(id, consensus),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["evaluations"] });
     },

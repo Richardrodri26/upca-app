@@ -7,39 +7,28 @@
  * Tesis: Evalúa la calidad del output del sistema RAG.
  */
 export function calculateIAP(
-  questions: {
-    relevanceRating: number | null;
-    coherenceRating: number | null;
-    adequacyRating: number | null;
+  consensuses: {
+    relevanceRating: number;
+    coherenceRating: number;
+    adequacyRating: number;
   }[],
 ): { iap: number; ratedCount: number; totalCount: number } {
-  const totalCount = questions.length;
+  const totalCount = consensuses.length;
 
-  const ratedQuestions = questions.filter(
-    (q) =>
-      q.relevanceRating != null &&
-      q.coherenceRating != null &&
-      q.adequacyRating != null,
-  );
-
-  if (ratedQuestions.length === 0) {
-    return { iap: 0, ratedCount: 0, totalCount };
+  if (totalCount === 0) {
+    return { iap: 0, ratedCount: 0, totalCount: 0 };
   }
 
-  const adequateCount = ratedQuestions.filter((q) => {
-    const avg =
-      ((q.relevanceRating ?? 0) +
-        (q.coherenceRating ?? 0) +
-        (q.adequacyRating ?? 0)) /
-      3;
+  const adequateCount = consensuses.filter((c) => {
+    const avg = (c.relevanceRating + c.coherenceRating + c.adequacyRating) / 3;
     return avg >= 4.0;
   }).length;
 
-  const iap = Math.round((adequateCount / ratedQuestions.length) * 100);
+  const iap = Math.round((adequateCount / totalCount) * 100);
 
   return {
     iap,
-    ratedCount: ratedQuestions.length,
+    ratedCount: totalCount,
     totalCount,
   };
 }

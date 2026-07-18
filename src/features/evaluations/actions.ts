@@ -5,9 +5,11 @@ import { requireAuth } from "@/lib/auth-middleware";
 import { prisma } from "@/lib/prisma";
 import { generateEvaluation as ragGenerate } from "@/lib/rag-client";
 import {
-  type RateQuestionInput,
-  rateQuestionSchema,
-} from "@/lib/validators/evaluation";
+  type ConsensusInput,
+  consensusSchema,
+  type ReviewQuestionInput,
+  reviewQuestionSchema,
+} from "./validators";
 
 const DEFAULT_ENFOQUE = "Desempeño general de funciones y responsabilidades";
 
@@ -21,8 +23,12 @@ import type {
 // ────────────────────────────────────────
 
 export async function getEvaluations(status?: EvaluationStatus) {
-  await requireAuth({ roles: ["ADMIN", "HR"] });
-  const where = status ? { status } : {};
+  const session = await requireAuth({ roles: ["ADMIN", "HR", "AREA_LEAD"] });
+  const baseWhere = status ? { status } : {};
+  const where =
+    session.user.role === "AREA_LEAD"
+      ? { ...baseWhere, position: { leaderId: session.user.id } }
+      : baseWhere;
 
   const evaluations = await prisma.evaluation.findMany({
     where,
@@ -37,28 +43,52 @@ export async function getEvaluations(status?: EvaluationStatus) {
 }
 
 export async function getEvaluation(id: string) {
-  await requireAuth({ roles: ["ADMIN", "HR"] });
+  const session = await requireAuth({ roles: ["ADMIN", "HR", "AREA_LEAD"] });
   const evaluation = await prisma.evaluation.findUnique({
     where: { id },
     include: {
-      position: { select: { id: true, name: true } },
+      position: { select: { id: true, name: true, leaderId: true } },
       manual: { select: { id: true, fileName: true } },
       createdBy: { select: { id: true, name: true } },
       questions: {
         orderBy: { order: "asc" },
+        include: {
+          reviews: {
+            select: {
+              reviewerRole: true,
+              reviewerId: true,
+              relevanceRating: true,
+              coherenceRating: true,
+              adequacyRating: true,
+            },
+          },
+          consensus: true,
+        },
       },
     },
   });
+
+  if (
+    evaluation &&
+    session.user.role === "AREA_LEAD" &&
+    evaluation.position.leaderId !== session.user.id
+  ) {
+    return null;
+  }
 
   return evaluation;
 }
 
 export async function getPositionsWithProcessedManual() {
-  await requireAuth({ roles: ["ADMIN", "HR"] });
+  const session = await requireAuth({ roles: ["ADMIN", "HR", "AREA_LEAD"] });
+  const baseWhere = { manual: { status: "PROCESSED" as const } };
+  const where =
+    session.user.role === "AREA_LEAD"
+      ? { ...baseWhere, leaderId: session.user.id }
+      : baseWhere;
+
   const positions = await prisma.position.findMany({
-    where: {
-      manual: { status: "PROCESSED" },
-    },
+    where,
     include: {
       manual: { select: { id: true, externalRef: true } },
     },
@@ -179,19 +209,166 @@ export async function updateQuestionStatus(
   return { success: true };
 }
 
-export async function rateQuestion(id: string, ratings: RateQuestionInput) {
-  await requireAuth({ roles: ["ADMIN", "HR"] });
-
-  const parsed = rateQuestionSchema.safeParse(ratings);
+export async function submitReview(
+  questionId: string,
+  input: ReviewQuestionInput,
+) {
+  const session = await requireAuth({ roles: ["ADMIN", "HR", "AREA_LEAD"] });
+  const parsed = reviewQuestionSchema.safeParse(input);
   if (!parsed.success) {
     return { success: false, error: "Calificación inválida (1-5)" };
   }
 
-  await prisma.question.update({
-    where: { id },
-    data: parsed.data,
+  const reviewerRole = session.user.role === "AREA_LEAD" ? "AREA_LEAD" : "HR";
+
+  if (reviewerRole === "AREA_LEAD") {
+    const question = await prisma.question.findUnique({
+      where: { id: questionId },
+      select: {
+        evaluation: { select: { position: { select: { leaderId: true } } } },
+      },
+    });
+    if (!question) {
+      return { success: false, error: "Pregunta no encontrada" };
+    }
+    if (question.evaluation.position.leaderId !== session.user.id) {
+      return {
+        success: false,
+        error: "Solo el líder del cargo puede realizar esta revisión",
+      };
+    }
+  }
+
+  await prisma.questionReview.upsert({
+    where: { questionId_reviewerRole: { questionId, reviewerRole } },
+    create: {
+      questionId,
+      reviewerId: session.user.id,
+      reviewerRole,
+      ...parsed.data,
+    },
+    update: { ...parsed.data },
   });
 
+  await computeCalibration(questionId);
+  revalidatePath("/evaluations");
+  return { success: true };
+}
+
+async function computeCalibration(questionId: string) {
+  const reviews = await prisma.questionReview.findMany({
+    where: { questionId },
+    select: {
+      reviewerId: true,
+      reviewerRole: true,
+      relevanceRating: true,
+      coherenceRating: true,
+      adequacyRating: true,
+    },
+  });
+  const hr = reviews.find((r) => r.reviewerRole === "HR");
+  const lead = reviews.find((r) => r.reviewerRole === "AREA_LEAD");
+
+  if (!hr || !lead) {
+    await prisma.question.update({
+      where: { id: questionId },
+      data: { calibrationStatus: "PENDING" },
+    });
+    return;
+  }
+
+  const maxDiff = Math.max(
+    Math.abs(hr.relevanceRating - lead.relevanceRating),
+    Math.abs(hr.coherenceRating - lead.coherenceRating),
+    Math.abs(hr.adequacyRating - lead.adequacyRating),
+  );
+
+  if (maxDiff >= 2) {
+    await prisma.question.update({
+      where: { id: questionId },
+      data: { calibrationStatus: "IN_CALIBRATION" },
+    });
+    return;
+  }
+
+  const consensus = {
+    relevanceRating: Math.round(
+      (hr.relevanceRating + lead.relevanceRating) / 2,
+    ),
+    coherenceRating: Math.round(
+      (hr.coherenceRating + lead.coherenceRating) / 2,
+    ),
+    adequacyRating: Math.round((hr.adequacyRating + lead.adequacyRating) / 2),
+  };
+
+  await prisma.$transaction([
+    prisma.questionConsensus.upsert({
+      where: { questionId },
+      create: {
+        questionId,
+        resolvedById: hr.reviewerId,
+        ...consensus,
+        resolvedAt: new Date(),
+      },
+      update: {
+        ...consensus,
+        resolvedById: hr.reviewerId,
+        resolvedAt: new Date(),
+      },
+    }),
+    prisma.question.update({
+      where: { id: questionId },
+      data: { calibrationStatus: "RESOLVED" },
+    }),
+  ]);
+}
+
+export async function resolveCalibration(
+  questionId: string,
+  final: ConsensusInput,
+) {
+  const session = await requireAuth({ roles: ["ADMIN", "HR"] });
+  const question = await prisma.question.findUnique({
+    where: { id: questionId },
+    select: { calibrationStatus: true },
+  });
+  if (!question) {
+    return { success: false, error: "Pregunta no encontrada" };
+  }
+  if (question.calibrationStatus !== "IN_CALIBRATION") {
+    return {
+      success: false,
+      error: "La pregunta no requiere calibración",
+    };
+  }
+
+  const parsed = consensusSchema.safeParse(final);
+  if (!parsed.success) {
+    return { success: false, error: "Valores finales inválidos (1-5)" };
+  }
+
+  await prisma.$transaction([
+    prisma.questionConsensus.upsert({
+      where: { questionId },
+      create: {
+        questionId,
+        resolvedById: session.user.id,
+        ...parsed.data,
+        resolvedAt: new Date(),
+      },
+      update: {
+        ...parsed.data,
+        resolvedById: session.user.id,
+        resolvedAt: new Date(),
+      },
+    }),
+    prisma.question.update({
+      where: { id: questionId },
+      data: { calibrationStatus: "RESOLVED" },
+    }),
+  ]);
+
+  revalidatePath("/evaluations");
   return { success: true };
 }
 
@@ -200,7 +377,7 @@ export async function activateEvaluation(evaluationId: string) {
 
   const questions = await prisma.question.findMany({
     where: { evaluationId },
-    select: { status: true },
+    select: { status: true, calibrationStatus: true },
   });
 
   const hasPending = questions.some((q) => q.status === "PENDING");
@@ -216,6 +393,17 @@ export async function activateEvaluation(evaluationId: string) {
     return {
       success: false,
       error: "Hay preguntas rechazadas. Editalas o eliminalas antes de activar",
+    };
+  }
+
+  const allResolved = questions.every(
+    (q) => q.calibrationStatus === "RESOLVED",
+  );
+  if (!allResolved) {
+    return {
+      success: false,
+      error:
+        "Toda pregunta debe tener ambas revisiones y discrepancies resueltas antes de activar",
     };
   }
 

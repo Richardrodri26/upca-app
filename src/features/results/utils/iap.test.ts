@@ -1,17 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { calculateIAP, calculateIRTO, metricColor } from "./iap";
 
-type Rated = {
-  relevanceRating: number | null;
-  coherenceRating: number | null;
-  adequacyRating: number | null;
+type Consensus = {
+  relevanceRating: number;
+  coherenceRating: number;
+  adequacyRating: number;
 };
 
-function q(
-  relevance: number | null,
-  coherence: number | null,
-  adequacy: number | null,
-): Rated {
+function q(relevance: number, coherence: number, adequacy: number): Consensus {
   return {
     relevanceRating: relevance,
     coherenceRating: coherence,
@@ -20,58 +16,34 @@ function q(
 }
 
 describe("calculateIAP", () => {
-  it("returns zeros for an empty array", () => {
+  it("returns zeros for an empty array (no consensus)", () => {
     expect(calculateIAP([])).toEqual({ iap: 0, ratedCount: 0, totalCount: 0 });
   });
 
-  it("counts zero rated when all ratings are null", () => {
-    expect(calculateIAP([q(null, null, null), q(null, null, null)])).toEqual({
-      iap: 0,
-      ratedCount: 0,
-      totalCount: 2,
-    });
-  });
-
-  it("does NOT count a partially-rated question as rated (plan-002 guard)", () => {
-    const result = calculateIAP([
-      q(5, null, null),
-      q(null, 4, null),
-      q(null, null, 4),
-    ]);
-    expect(result.ratedCount).toBe(0);
-    expect(result.iap).toBe(0);
-    expect(result.totalCount).toBe(3);
-  });
-
-  it("counts a fully-rated triple whose average is exactly 4.0 as adequate", () => {
+  it("counts a consensus whose average is exactly 4.0 as adequate", () => {
     const result = calculateIAP([q(4, 4, 4)]);
     expect(result.ratedCount).toBe(1);
     expect(result.iap).toBe(100);
   });
 
-  it("does not count a triple averaging 3.67 as adequate", () => {
+  it("does not count a consensus averaging 3.67 as adequate", () => {
     const result = calculateIAP([q(5, 4, 2)]);
     expect(result.ratedCount).toBe(1);
     expect(result.iap).toBe(0);
   });
 
   it("computes the right percentage and rounding for a mixed set", () => {
-    const result = calculateIAP([
-      q(5, 5, 5),
-      q(4, 4, 4),
-      q(5, 4, 2),
-      q(null, null, null),
-    ]);
-    expect(result.totalCount).toBe(4);
+    const result = calculateIAP([q(5, 5, 5), q(4, 4, 4), q(5, 4, 2)]);
+    expect(result.totalCount).toBe(3);
     expect(result.ratedCount).toBe(3);
     expect(result.iap).toBe(67);
   });
 
-  it("reports iap 100 when the single fully-rated question is adequate", () => {
+  it("reports iap 100 when the single consensus is adequate", () => {
     expect(calculateIAP([q(5, 5, 5)]).iap).toBe(100);
   });
 
-  it("reports iap 0 when the single fully-rated question is inadequate", () => {
+  it("reports iap 0 when the single consensus is inadequate", () => {
     expect(calculateIAP([q(1, 1, 1)]).iap).toBe(0);
   });
 });

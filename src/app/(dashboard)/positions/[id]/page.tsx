@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getPosition } from "@/features/positions/actions";
 import { PositionDetailActions } from "@/features/positions/components/position-detail-actions";
+import { PositionLeaderSelector } from "@/features/positions/components/position-leader-selector";
 import type { EvaluationStatus, ManualStatus } from "@/generated/prisma/client";
 
 type Params = Promise<{ id: string }>;
@@ -72,6 +73,11 @@ export default async function PositionDetailPage({
           </CardContent>
         </Card>
       )}
+
+      <PositionLeaderSelector
+        positionId={position.id}
+        currentLeaderId={position.leaderId}
+      />
 
       <Card>
         <CardHeader>
