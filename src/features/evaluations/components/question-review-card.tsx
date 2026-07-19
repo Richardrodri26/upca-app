@@ -297,38 +297,40 @@ export function QuestionReviewCard({
             </span>
           )}
         </div>
-        <div className="flex flex-wrap gap-1">
-          {question.status !== "APPROVED" && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onApprove(question.id)}
-            >
-              Aprobar
-            </Button>
-          )}
-          {question.status !== "REJECTED" && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onReject(question.id)}
-            >
-              Rechazar
-            </Button>
-          )}
-          {!editing && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setEditText(question.text);
-                setEditing(true);
-              }}
-            >
-              Editar
-            </Button>
-          )}
-        </div>
+        {reviewerRole !== "AREA_LEAD" && (
+          <div className="flex flex-wrap gap-1">
+            {question.status !== "APPROVED" && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onApprove(question.id)}
+              >
+                Aprobar
+              </Button>
+            )}
+            {question.status !== "REJECTED" && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onReject(question.id)}
+              >
+                Rechazar
+              </Button>
+            )}
+            {!editing && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setEditText(question.text);
+                  setEditing(true);
+                }}
+              >
+                Editar
+              </Button>
+            )}
+          </div>
+        )}
       </CardHeader>
 
       <CardContent className="flex flex-col gap-4">
