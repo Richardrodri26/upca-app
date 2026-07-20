@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import type { EvaluationStatus } from "@/generated/prisma/client";
 import { EvaluationStatusBadge } from "./evaluation-status-badge";
@@ -22,6 +23,7 @@ type ReviewSummaryBarProps = {
   canActivate: boolean;
   onActivate: () => void;
   isActivating: boolean;
+  role?: string;
 };
 
 export function ReviewSummaryBar({
@@ -38,7 +40,9 @@ export function ReviewSummaryBar({
   canActivate,
   onActivate,
   isActivating,
+  role,
 }: ReviewSummaryBarProps) {
+  const router = useRouter();
   const progress =
     totalQuestions > 0 ? (reviewedCount / totalQuestions) * 100 : 0;
 
@@ -53,7 +57,16 @@ export function ReviewSummaryBar({
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <EvaluationStatusBadge status={status} />
-          {status === "REVIEW" && (
+          {status === "REVIEW" && role === "AREA_LEAD" && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => router.push("/evaluations")}
+            >
+              Aceptar y salir
+            </Button>
+          )}
+          {status === "REVIEW" && role !== "AREA_LEAD" && (
             <Button
               size="sm"
               onClick={onActivate}

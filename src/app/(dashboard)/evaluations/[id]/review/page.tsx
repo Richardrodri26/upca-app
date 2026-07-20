@@ -123,6 +123,7 @@ export default function ReviewPage({
         canActivate={canActivate}
         onActivate={() => activateEval.mutate(id)}
         isActivating={activateEval.isPending}
+        role={role}
       />
 
       <div className="flex flex-col gap-3">
