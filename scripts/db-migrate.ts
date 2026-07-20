@@ -19,11 +19,19 @@ async function main() {
     await client.query("SELECT 1");
     console.log("DB warm — connection held open");
 
-    // Release any stale advisory lock from a previous crashed migration
-    await client.query("SELECT pg_advisory_unlock($1)", [
-      PRISMA_ADVISORY_LOCK_ID,
-    ]);
-    console.log("Advisory lock released — running migration");
+    // Terminate stale sessions from previous crashed migrations that may hold the advisory lock
+    const terminated = await client.query<{ count: string }>(`
+      SELECT count(*) FROM (
+        SELECT pg_terminate_backend(pid)
+        FROM pg_stat_activity
+        WHERE datname = current_database()
+          AND pid <> pg_backend_pid()
+          AND state IN ('idle', 'idle in transaction')
+      ) t
+    `);
+    console.log(`Terminated ${terminated.rows[0].count} stale sessions`);
+
+    console.log("Running migration");
 
     execSync("prisma migrate deploy", {
       env: { ...process.env, DATABASE_URL: migrateUrl },
