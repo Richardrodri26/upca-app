@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { AppSidebar } from "@/components/dashboard/app-sidebar";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Separator } from "@/components/ui/separator";
 import {
   SidebarInset,
@@ -30,6 +31,9 @@ export function DashboardClientLayout({
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="h-6" />
           <span className="text-sm font-medium">UPCA</span>
+          <div className="ml-auto">
+            <ThemeToggle />
+          </div>
         </header>
         <main className="mx-auto max-w-screen-2xl flex-1 p-4 sm:p-6">
           {children}

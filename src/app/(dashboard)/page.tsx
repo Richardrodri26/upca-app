@@ -55,7 +55,7 @@ function HRDashboard() {
       </div>
 
       {/* Stat cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
         <Card className="[--card-spacing:--spacing(6)]">
           <CardHeader>
             <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -99,7 +99,7 @@ function HRDashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-baseline gap-2">
+            <div className="flex flex-wrap items-baseline gap-2">
               <p className="text-4xl font-bold tabular-nums">
                 {isLoading ? "—" : `${stats?.averageIAP ?? 0}%`}
               </p>
@@ -127,37 +127,39 @@ function HRDashboard() {
               </p>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Título</TableHead>
-                  <TableHead className="w-40">Cargo</TableHead>
-                  <TableHead className="w-32">Estado</TableHead>
-                  <TableHead className="w-24 text-right">Acciones</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {recentEvals.map((e) => (
-                  <TableRow key={e.id}>
-                    <TableCell className="font-medium">{e.title}</TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {e.position?.name ?? "—"}
-                    </TableCell>
-                    <TableCell>
-                      <EvaluationStatusBadge status={e.status} />
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Link
-                        href={`/evaluations/${e.id}/results`}
-                        className="text-sm text-primary transition-transform duration-150 hover:underline active:scale-[0.96]"
-                      >
-                        Resultados
-                      </Link>
-                    </TableCell>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Título</TableHead>
+                    <TableHead className="w-40">Cargo</TableHead>
+                    <TableHead className="w-32">Estado</TableHead>
+                    <TableHead className="w-24 text-right">Acciones</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {recentEvals.map((e) => (
+                    <TableRow key={e.id}>
+                      <TableCell className="font-medium">{e.title}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {e.position?.name ?? "—"}
+                      </TableCell>
+                      <TableCell>
+                        <EvaluationStatusBadge status={e.status} />
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Link
+                          href={`/evaluations/${e.id}/results`}
+                          className="text-sm text-primary transition-transform duration-150 hover:underline active:scale-[0.96]"
+                        >
+                          Resultados
+                        </Link>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>
@@ -186,7 +188,7 @@ function EmployeeDashboard() {
       </div>
 
       {/* Stat cards */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
         <Card className="[--card-spacing:--spacing(6)]">
           <CardHeader>
             <CardTitle className="text-sm font-medium text-muted-foreground">

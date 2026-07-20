@@ -13,11 +13,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Info } from "lucide-react";
 import { AssignmentStatusBadge } from "@/features/assignments/components/assignment-status-badge";
 import { useSession } from "@/features/auth/hooks/use-session";
 import { useEvaluationResults } from "@/features/results/queries";
 import { downloadResultsXlsx } from "@/features/results/utils/export-xlsx";
 import { metricColor } from "@/features/results/utils/iap";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export default function EvaluationResultsPage({
   params,
@@ -91,6 +98,7 @@ export default function EvaluationResultsPage({
       </div>
 
       {/* Stats cards */}
+      <TooltipProvider>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">
@@ -110,7 +118,18 @@ export default function EvaluationResultsPage({
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              IAP
+              <Tooltip>
+                <TooltipTrigger>
+                  <span className="flex cursor-default items-center gap-1">
+                    IAP <Info className="size-3.5 opacity-50" />
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="flex flex-col items-start gap-1">
+                  <p className="font-semibold">Índice de Adecuación de Preguntas</p>
+                  <p>% de preguntas donde el promedio de pertinencia + coherencia + adecuación ≥ 4.0</p>
+                  <p className="font-mono opacity-75">(adecuadas / total calificadas) × 100</p>
+                </TooltipContent>
+              </Tooltip>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -125,7 +144,18 @@ export default function EvaluationResultsPage({
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              IRTO
+              <Tooltip>
+                <TooltipTrigger>
+                  <span className="flex cursor-default items-center gap-1">
+                    IRTO <Info className="size-3.5 opacity-50" />
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="flex flex-col items-start gap-1">
+                  <p className="font-semibold">Índice de Reducción de Tiempo Operativo</p>
+                  <p>Compara el tiempo de generación de la IA contra una línea base manual estimada de {results.irtoManualMinutes} min</p>
+                  <p className="font-mono opacity-75">((base_manual − tiempo_IA) / base_manual) × 100</p>
+                </TooltipContent>
+              </Tooltip>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -139,7 +169,7 @@ export default function EvaluationResultsPage({
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               {results.evaluation.generationTime != null
-                ? `${results.irtoGenerationMinutes.toFixed(0)} min IA vs ${results.irtoManualMinutes} min manual`
+                ? `${results.evaluation.generationTime! < 60 ? `${Math.round(results.evaluation.generationTime!)} seg` : `${Math.round(results.evaluation.generationTime! / 60)} min`} IA vs ${results.irtoManualMinutes} min manual`
                 : "No disponible"}
             </p>
           </CardContent>
@@ -158,6 +188,7 @@ export default function EvaluationResultsPage({
           </CardContent>
         </Card>
       </div>
+      </TooltipProvider>
 
       {/* Results table */}
       <Card>

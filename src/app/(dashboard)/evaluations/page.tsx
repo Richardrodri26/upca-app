@@ -112,6 +112,7 @@ export default function EvaluationsPage() {
       ) : (
         <>
           <div className="hidden md:block">
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -162,6 +163,7 @@ export default function EvaluationsPage() {
                 ))}
               </TableBody>
             </Table>
+            </div>
           </div>
 
           <div className="flex flex-col gap-4 md:hidden">
