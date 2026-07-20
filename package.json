@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "next dev",
     "postinstall": "prisma generate",
-    "build": "DATABASE_URL=$DATABASE_URL_UNPOOLED prisma migrate deploy && next build",
+    "build": "PRISMA_MIGRATE_SKIP_ADVISORY_LOCK=1 DATABASE_URL=$DATABASE_URL_UNPOOLED prisma migrate deploy && next build",
     "start": "next start",
     "lint": "biome check",
     "format": "biome format --write",
