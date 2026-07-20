@@ -20,10 +20,10 @@ export async function POST(req: NextRequest) {
         "Evaluation",
         "Manual",
         "Position",
-        "verification",
-        "account",
-        "session",
-        "user"
+        "Verification",
+        "Account",
+        "Session",
+        "User"
       RESTART IDENTITY CASCADE;
     `);
     return NextResponse.json({ ok: true, message: "All tables truncated" });
