@@ -1,13 +1,18 @@
 import { Pool } from "pg";
 import { execSync } from "node:child_process";
 
+const PRISMA_ADVISORY_LOCK_ID = 72707369;
+
 async function warmup(url: string) {
   const pool = new Pool({ connectionString: url, connectionTimeoutMillis: 30000 });
   try {
     await pool.query("SELECT 1");
-    console.log("DB warm — proceeding with migration");
+    console.log("DB warm");
+    // Release any stale advisory lock from a crashed previous migration
+    await pool.query("SELECT pg_advisory_unlock($1)", [PRISMA_ADVISORY_LOCK_ID]);
+    console.log("Advisory lock released — proceeding with migration");
   } catch {
-    console.log("Warmup query failed, proceeding anyway");
+    console.log("Warmup/unlock failed, proceeding anyway");
   } finally {
     await pool.end();
   }
